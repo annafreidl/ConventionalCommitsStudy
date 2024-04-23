@@ -38,7 +38,8 @@
 \usepackage{booktabs} % for professional tables
 \usepackage{longtable} % for tables over multiple pages
 \usepackage{pdflscape} % enables landscape mode for multiple pages in PDF (with longtable)
-\usepackage{afterpage} % clears current page by flushing all floats
+\usepackage{afterpage}
+\usepackage[T1]{fontenc} % clears current page by flushing all floats
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%_TITLE_PAGE_%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{document}
 
@@ -82,7 +83,7 @@
 \bibliographystyle{abbrv}
 \bibliography{library/citations.bib}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%_APPENDIX_%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section*{Appendix} \label{Appendix}
+\section*{Appendix} \label{sec:appendix}
 \addcontentsline{toc}{section}{Appendix}    % adds entry to table of contents
 \selbstaendigkeitserklaerung{\today}
 %\input{chapters/xxx}                       % add in case you have additional images/tables
