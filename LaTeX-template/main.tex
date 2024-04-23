@@ -1,0 +1,90 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%_TEMPLATE_PACKAGES_%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\documentclass[
+	a4paper,
+	pagesize,
+	pdftex,
+	12pt,
+	% twoside,    % + BCOR darunter: für doppelseitigen Druck aktivieren, sonst beide deaktivieren
+	% BCOR=5mm,   % Dicke der Bindung berücksichtigen (Copyshop fragen, wie viel das ist)
+	ngerman,
+	fleqn,
+	final,
+	]{scrartcl}
+    
+% PACKAGES FOR THE INSTITUTSVORLAGE
+\usepackage[utf8]{inputenc}
+\usepackage[ngerman]{babel}
+\usepackage[unicode=true]{hyperref} % label, references, websites and crosslinks in PDF
+\usepackage{setspace} % für Elemente der Titelseite
+\usepackage{tikz} % für Elemente der Titelseite
+\usepackage{tabularx} % für Elemente der Titelseite
+\usepackage[draft=false,babel,tracking=true,kerning=true,spacing=true]{microtype} % optischer Randausgleich
+\microtypesetup{nopatch={footnote}} % disable footnote microtype warning
+% PACKAGES FOR USING THIS PREBUILD STUCTURE
+\usepackage{csquotes}   % better quote style for biblatex
+\usepackage{graphicx}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%_YOUR_PACKAGES_%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% UTILITY PACKAGES
+\usepackage{cite}
+\usepackage{comment} % enables block comments via \begin{comment} ... \end{comment} environment
+\usepackage{amsthm} % for definitions, lemmas, etc. - also for defining your own stuff, eg below:
+    %\theoremstyle{definition}  % defines a new theorem called definition
+    %\newtheorem{definition}{Definition}[section]   % definition setup and call
+% IMAGE PACKAGES
+\usepackage{wrapfig}    % create figures with wrapped text around it
+\usepackage{caption}    % better captions for figures
+\usepackage{subcaption} % captions for subfigures
+% PRESENTATION PACKAGES
+\usepackage{booktabs} % for professional tables
+\usepackage{longtable} % for tables over multiple pages
+\usepackage{pdflscape} % enables landscape mode for multiple pages in PDF (with longtable)
+\usepackage{afterpage} % clears current page by flushing all floats
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%_TITLE_PAGE_%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{document}
+
+% Beispielhafte Nutzung der Vorlage für die Titelseite (bitte anpassen):
+\input{Institutsvorlage}
+
+\titel{This is a Long Title which Spans Over Several Lines and Shall Always Look the Same} % Titel der Arbeit
+\typ{Masterarbeit} % Typ der Arbeit:  Diplomarbeit, Masterarbeit, Bachelorarbeit
+\grad{Master of Science (M. Sc.)} % erreichter Akademischer Grad
+    % z.B.: Master of Science (M. Sc.), Master of Education (M. Ed.), Bachelor of Science (B. Sc.), Bachelor of Arts (B. A.)
+\autor{Maxime Mustermann} % Autor der Arbeit, mit Vor- und Nachname
+\gebdatum{1.1.1970} % Geburtsdatum des Autors
+\gebort{Bielefeld} % Geburtsort des Autors
+\gutachter{Prof. Dr. Dr. hc. mult. Kerstin von Kienfeld}{Prof. Dr. Bernd Blume} % Erst- und Zweitgutachter der Arbeit
+\mitverteidigung % entfernen, falls keine Verteidigung erfolgt
+\makeTitel
+
+\begin{abstract}
+	\textbf{Abstract.} Write your abstract here.
+\end{abstract}
+\newpage
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%_TABLE_OF_CONTENTS_%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\pagenumbering{gobble}  % page numbers invisible for TOC and filler pages
+\tableofcontents
+\cleardoublepage    % deactivate for one-sided printing
+%\newpage           % activate for one-sided printing
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%_CHAPTERS_%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\pagenumbering{arabic}  % start regular page numbers from here
+% insert and call your designated chapters here from chapters/... folder
+
+\input{chapters/01_introduction}
+
+\input{chapters/02_motivation}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%_BIBLIOGRAPHY_%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% create your bibliography based on your files in library/...
+% remember to edit \addbibresource in the TEMPLATE_PACKAGSES area above!
+\newpage
+\pagenumbering{roman} % start roman page numbers from here (optional)
+\bibliographystyle{abbrv}
+\bibliography{library/citations.bib}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%_APPENDIX_%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section*{Appendix} \label{Appendix}
+\addcontentsline{toc}{section}{Appendix}    % adds entry to table of contents
+\selbstaendigkeitserklaerung{\today}
+%\input{chapters/xxx}                       % add in case you have additional images/tables
+\end{document}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
