@@ -19,8 +19,8 @@
 \setlength{\bibsep}{0.0pt}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\newcommand{\ThesisTitle}{The Impact of Conventional Commits on Software Project Quality\xspace}
-\newcommand{\ProjectAcronym}{\textsc{ICCSPQ}\xspace}
+\newcommand{\ThesisTitle}{A Study of Conventional Commits\xspace}
+\newcommand{\ProjectAcronym}{\textsc{SCC}\xspace}
 
 % % some commands for commenting
 \usepackage{ifthen}
@@ -151,7 +151,8 @@
 \end{center}
 
 \section*{Topic Description}
-Conventional Commits is a lightweight convention for structuring commit messages. \cite{conventionalcommits} It provides a standardized format for describing the nature of changes made to a codebase, making it easier for developers to understand and navigate the project's history. This proposal outlines a potential research study to investigate the impact of Conventional Commits on software project quality.
+
+In software development, effective communication and code maintainability are essential for successful projects. Conventional commits ('CC') \cite{conventionalcommits}, a standardized message format for documenting code changes, provide a structured approach to improving code understanding and readability for both humans and automated tools. However, the  practical adoption and tangible influence of CCs on software projects remains largely unexplored. This study aims to analyse the application consistency, distribution, and impact of conventional commits on software projects.
 
 \paragraph{Motivierende Arbeiten:} 
 \begin{itemize}
@@ -161,6 +162,7 @@ Conventional Commits is a lightweight convention for structuring commit messages
 \end{itemize}
 
 \section{State of the art and preliminary work}
+Although there has been some research into how to improve the quality of commit messages, Santos et al. \cite{Santos2020CommitCU} found in their study that about 14\% of commit messages in over 23,000 OSS projects were completely blank, 66\% of messages contained only a few words, and only 10\% of commits contained messages with descriptive English sentences.
 
 \subsection{The first group of approaches} 
 \subsection{The second group of approaches} \label{subsec_SecondGroupRelated}
@@ -169,24 +171,51 @@ Conventional Commits is a lightweight convention for structuring commit messages
 
 \subsection{Anticipated total duration of the project}
 
+I anticipate a total duration of 4 months.
+
 \subsection{Objectives}
 
+This thesis aims to investigate the application, distribution, and impact of conventional commits (CC) on software projects. By analyzing real-world code repositories and developer behavior, this study will address the following key objectives:
+
+\begin{itemize}
+\item \textbf{Analysing the consistency of CC applications and the distribution and frequency of commit types.}
+
+    Evaluate the extent to which CC guidelines are adopted across different software repositories.
+    Identify potential variations in CC usage patterns by individual developers. Analyze the frequency of different commit types (e.g., bug fixes, feature additions) within projects. Investigate how the distribution of commit types impacts project management tasks like effort estimation and resource allocation.
+
+ \item \textbf{Change in commits before and after the transition to conventional commits.}
+
+    Identification of the number of files modified, the number of insertions and deletions, as well as which files have been modified.
+
+\item \textbf{What impact do conventional commits have on the maintainability of software projects?}
+
+    In the following, we will examine the extent to which the consistent use of CC influences the understanding and modification of code in the future. How can CC be used for semantic versioning? The existing use of CC for SECOM security commits should also be mentioned in this context.
+\end{itemize}
+
+By achieving these objectives, this research will contribute to a deeper understanding of the practical effectiveness of CC in software development. The findings can inform the development of tools and guidelines for promoting consistent and impactful CC adoption, ultimately leading to better communication and project management practices.
+
+\paragraph {This research will leverage the following key techniques:}
+
+\begin{itemize}
+\item Analysis of Real-World Code Repositories: Conventional-changelog scripts or custom scripts to assess adherence to Conventional Commit guidelines and extract relevant data.
+\item Statistical Analysis will be employed to identify trends and patterns in CC usage and their impact on project management and code maintainability.
+\end{itemize}
+
+\paragraph {Dataset:}
+\begin{itemize}
+\item identify the 10 most frequently used programming languages \cite{midnight2024}
+\item min. 200 leading open-source projects for each language (GitHub’s REST API)
+\item Deduplication process
+\item Identify and filter bot-generated commits and non-english commit messages 
+\end{itemize}
+
 %short introduction of work package macros (for consistency)
-\newcommand{\WPone}{Something, something and doing something}
-\newcommand{\WPtwo}{Working in a coal mine}
-\newcommand{\WPthree}{Sixteen tons}
-\newcommand{\WPfour}{Celebration preparation}
+\newcommand{\WPone}{How consistently are conventional commits applied?}
+\newcommand{\WPtwo}{Analyzing the distribution and frequency of commit types}
+\newcommand{\WPthree}{What impact do conventional commits have on the maintainability of software projects?}
 
 \subsection{Work programme incl. proposed research methods}
 \label{subsec-workprogram}
-
-\begin{figure}[ht]
-\centering
-\includegraphics[width=\linewidth]{img/gantt}
-\caption{An example work plan of another project}
-\label{fig:work-plan}
-\end{figure}
-
 
 % In this section, subsections are organized by packages -- AZ
 \newcounter{wp}
@@ -204,16 +233,17 @@ Conventional Commits is a lightweight convention for structuring commit messages
 \package{\WPone.}
 \label{wp:something}
 
+\begin{itemize}
+\item 
+\item 
+\item 
+\end{itemize}
+
 \paragraph{Challenges and motivation.}
+
 
 \paragraph{Research plan and individual research tasks.}
 
-\task{Refining something}
-\label{task-wp1-1}
-
-\paragraph{Research methodology and validation strategy.}
-
-\task{The second important task}
 \label{task-wp1-2}
 
 %%%%%%%%%%%%%%%%%%%% New WP Starts
@@ -224,9 +254,6 @@ Conventional Commits is a lightweight convention for structuring commit messages
 \package{\WPthree.}
 \label{wp:do-this}
 
-%%%%%%%%%%%%%%%%%%%% New WP Starts
-\package{\WPfour.}
-\label{wp:do-that}
 
 
 \let\thesubsection=\oldthesubsection
@@ -234,6 +261,12 @@ Conventional Commits is a lightweight convention for structuring commit messages
 \setcounter{subsection}{3}
 
 \subsection{Data handling}
+
+All results from the thesis experiments will be publicly available, including all data and all code.
+In addition, the thesis source code will be made available through a public repository (e.g.
+github.com), such that additional researchers can use it and contribute to the project. Each
+published experiment will be made replicable through included automated scripts.
+
 \subsection{Other information}
 
 \section{Bibliography}
