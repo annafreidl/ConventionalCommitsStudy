@@ -10,7 +10,7 @@ def load_dataset(yaml_path):
     if not os.path.exists(json_path):
         extracted_data = []
 
-        with open(yaml_path, "r") as file:
+        with open(yaml_path, "r", encoding='utf-8') as file:
             data = yaml.safe_load(file)
             for d in data:
                 if "name" in d and "clone_url" in d:

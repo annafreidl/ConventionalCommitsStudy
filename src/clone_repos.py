@@ -1,10 +1,9 @@
 import os
 import shutil
 from pathlib import Path
-from git import Repo
+from git import Repo, GitCommandError
 from git.remote import RemoteProgress
 from tqdm import tqdm
-
 
 FILE = Path(__file__).resolve()
 ROOT = FILE.parents[1]
@@ -31,7 +30,16 @@ def clone_repo(repo):
 
     if not os.path.exists(repo_dir):
         print(f"Cloning {repo_name} from {repo_url}")
-        return Repo.clone_from(repo_url, repo_dir, progress=CloneProgress())
+        try:
+            return Repo.clone_from(repo_url, repo_dir, progress=CloneProgress())
+        except GitCommandError as e:
+            # Fange Git-Fehler ab, wie z.B. deaktivierte Repositories oder Fehler beim Klonen
+            print(f"Fehler beim Klonen des Repositories {repo_name}: {e}")
+            if "Repository not found" in str(e) or "Repository disabled" in str(e):
+                print(f"Das Repository {repo_name} ist entweder deaktiviert oder nicht mehr verfügbar.")
+            else:
+                print(f"Ein allgemeiner Git-Fehler ist aufgetreten: {e}")
+            return None
     else:
         print(f"Repository {repo_name} already exists")
         return Repo(repo_dir)
