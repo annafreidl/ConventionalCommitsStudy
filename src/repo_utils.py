@@ -29,9 +29,16 @@ def save_commits_to_json(commit_messages, repo_name, results_dir):
         {'committed_datetime': c[0].isoformat(), 'message': c[1]} for c in commit_messages
     ]
 
-    enriched_commits = enrich_commits_with_metadata(json_serializable_commits)
+    enriched_commits, summary = enrich_commits_with_metadata(json_serializable_commits)
 
+    # Erstelle die gesamte JSON-Datenstruktur
+    json_data = {
+        "commits": enriched_commits,
+        "custom_types": list(summary['custom_type_distribution'].keys()),
+        "cc_types": list(summary['cc_type_distribution'].keys()),
+        "analysis_summary": summary
+    }
 
     with open(file_path_json, "w", encoding="utf-8") as f:
-        json.dump(enriched_commits, f, indent=2)
+        json.dump(json_data, f, indent=2)
     return file_path_json

@@ -33,5 +33,5 @@ def process_repo(repo_data, results_dir):
 
     # JSON-Daten laden und visualisieren
     commits_from_json = load_json(file_path_json)
-    if commits_from_json:
-        visualize_repo_commits(commits_from_json, repo_name)
+    # if commits_from_json:
+    #      visualize_repo_commits(commits_from_json, repo_name)
