@@ -2,6 +2,8 @@
 Logik zum Verarbeiten der Repositories,
 inklusive dem Klonen, dem Laden von Commits und der Visualisierung.
 """
+from git import GitCommandError
+
 from clone_repos import clone_repo
 from repo_utils import load_commit_messages, save_commits_to_json
 
@@ -19,7 +21,7 @@ def process_repo(repo_data, results_dir):
 
     try:
         commit_messages = load_commit_messages(cloned_repo)
-    except AttributeError as e:
+    except (AttributeError, GitCommandError) as e:
         print(f"Fehler beim Laden der Commit-Nachrichten für {repo_data['name']}: {e}")
         return
 
