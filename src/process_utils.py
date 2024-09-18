@@ -28,7 +28,7 @@ def process_repo(repo_data, results_dir):
 
     repo_name = repo_data["name"].replace("/", "_")
 
-    # Speichern der Commits als JSON
+    # Speichern der Commits mit Metadaten als JSON
     file_path_json = save_commits_to_json(commit_messages, repo_name, results_dir)
 
     # JSON-Daten laden und visualisieren
