@@ -1,16 +1,23 @@
-from collections import Counter
 import matplotlib.pyplot as plt
-from analysis import is_conventional_commit, save_custom_types, CUSTOM_TYPES_FILE_PATH, custom_types
 from json_utils import load_json
 
-
-def visualize_repo_commits(commits_from_json, repo_name):
+def visualize_repo_commits(json_file_path, repo_name):
     """
     Visualisiert Commit-Daten eines Repositories basierend auf einer JSON-Datei.
     """
+    data = load_json(json_file_path)
+    if data is None:
+        print(f"Fehler beim Laden der JSON-Datei für {repo_name}.")
+        return
 
-    visualize_cc_ratio(commits_from_json, repo_name)
-    visualize_custom_type_word_counts(CUSTOM_TYPES_FILE_PATH)
+    analysis_summary = data.get('analysis_summary', {})
+    custom_type_distribution = analysis_summary.get('custom_type_distribution', {})
+    cc_type_distribution = analysis_summary.get('cc_type_distribution', {})
+
+    # Visualisierungsfunktionen aufrufen
+    visualize_cc_ratio(analysis_summary, repo_name)
+    visualize_type_distribution(custom_type_distribution, f'Custom Types in {repo_name}', 'Custom Types')
+    visualize_type_distribution(cc_type_distribution, f'CC Types in {repo_name}', 'CC Types')
 
 
 def visualize_pie_chart(conventional_count, unconventional_count, project_name):
@@ -28,49 +35,51 @@ def visualize_pie_chart(conventional_count, unconventional_count, project_name):
 
     plt.pie(sizes, labels=labels, colors=colors, autopct=make_pct(sizes), startangle=140)
     plt.title(f'Number of CC in project: {project_name}')
-    plt.axis('equal')  # Kreisförmig anzeigen
+    plt.axis('equal')
     plt.show()
 
 
-def visualize_cc_ratio(commits, project_name):
+def visualize_cc_ratio(analysis_summary, project_name):
     """
     Erstellt ein Kreisdiagramm, das das Verhältnis von konventionellen zu nicht-konventionellen Commits visualisiert.
     """
-    conventional_count = sum(is_conventional_commit(commit['message']) for commit in commits)
-    unconventional_count = len(commits) - conventional_count
+    conventional_count = analysis_summary.get('conventional_commits', 0)
+    unconventional_count = analysis_summary.get('unconventional_commits', 0)
 
-    print("Custom Types:", set(custom_types))
-
-    # Speichere die custom commit types
-    save_custom_types(custom_types)
+    # Überprüfe, ob es überhaupt Commits gibt
+    total_commits = conventional_count + unconventional_count
+    if total_commits == 0:
+        print(f"Keine Commits zum Analysieren für das Projekt {project_name}.")
+        return
 
     # Kreisdiagramm visualisieren
     visualize_pie_chart(conventional_count, unconventional_count, project_name)
 
 
-def visualize_custom_type_word_counts(json_file_path):
+def visualize_type_distribution(type_distribution, title, x_label, top_n=20):
     """
-    Visualisiert die 20 häufigsten Wörter in einer JSON-Datei.
+    Visualisiert die Verteilung der Typen als Balkendiagramm, begrenzt auf die Top N häufigsten Typen.
+
+    Args:
+        type_distribution (dict): Dictionary mit Typen als Schlüssel und deren Häufigkeit als Wert.
+        title (str): Titel des Diagramms.
+        x_label (str): Bezeichnung der x-Achse.
+        top_n (int): Anzahl der Top-Typen, die angezeigt werden sollen.
     """
-    data = load_json(json_file_path)
-    if data is None:
+    if not type_distribution:
+        print(f"Keine Daten für {title} vorhanden.")
         return
 
-    word_counts = Counter(data)
-    most_common_words = word_counts.most_common(20)
-
-    if not most_common_words:
-        print("Keine Wörter zum Anzeigen gefunden.")
-        return
-
-    words, counts = zip(*most_common_words)
+    # Sortiere das Dictionary nach Häufigkeit absteigend und wähle die Top N aus
+    sorted_types = sorted(type_distribution.items(), key=lambda item: item[1], reverse=True)[:top_n]
+    types, counts = zip(*sorted_types)
 
     # Balkendiagramm erstellen
     plt.figure(figsize=(10, 6))
-    plt.bar(words, counts, color='#87CEEB')
-    plt.xlabel('Wörter')
+    plt.bar(types, counts, color='#87CEEB')
+    plt.xlabel(x_label)
     plt.ylabel('Häufigkeit')
-    plt.title('Die 20 häufigsten custom types')
+    plt.title(f'{title} (Top {top_n})')
     plt.xticks(rotation=45, ha='right')
     plt.tight_layout()
     plt.show()
@@ -78,4 +87,4 @@ def visualize_custom_type_word_counts(json_file_path):
 
 # Aufruf der Funktion im Hauptteil
 if __name__ == "__main__":
-    visualize_custom_type_word_counts('C:\\Users\\annaf\\PycharmProjects\\Bachelorarbeit\\src\\results\\custom_types.json')
+    visualize_type_distribution('C:\\Users\\annaf\\PycharmProjects\\Bachelorarbeit\\src\\results\\custom_types.json')

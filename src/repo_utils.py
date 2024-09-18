@@ -1,6 +1,8 @@
 from git import GitCommandError
 from pathlib import Path
 import json
+
+from constants import *
 from enrich_with_metadata import enrich_commits_with_metadata
 
 
@@ -22,9 +24,19 @@ def load_commit_messages(repo):
 
 def save_commits_to_json(commit_messages, repo_name, results_dir):
     """
-    Speichert die Commit-Nachrichten als JSON-Datei.
+    Speichert die Commit-Nachrichten als JSON-Datei und fügt eine Zusammenfassung hinzu.
+
+    Args:
+        commit_messages (list): Liste von Tupeln mit (committed_datetime, message).
+        repo_name (str): Name des Repositories.
+        results_dir (str): Verzeichnis, in dem die Ergebnisse gespeichert werden sollen.
+
+    Returns:
+        Path: Pfad zur gespeicherten JSON-Datei.
     """
+
     file_path_json = Path(results_dir) / f"{repo_name}_commit_messages.json"
+
     json_serializable_commits = [
         {'committed_datetime': c[0].isoformat(), 'message': c[1]} for c in commit_messages
     ]
@@ -33,10 +45,10 @@ def save_commits_to_json(commit_messages, repo_name, results_dir):
 
     # Erstelle die gesamte JSON-Datenstruktur
     json_data = {
-        "commits": enriched_commits,
-        "custom_types": list(summary['custom_type_distribution'].keys()),
-        "cc_types": list(summary['cc_type_distribution'].keys()),
-        "analysis_summary": summary
+        KEY_COMMITS: enriched_commits,
+        KEY_CUSTOM_TYPES: list(summary[CUSTOM_TYPE_DISTRIBUTION_KEY].keys()),
+        KEY_CC_TYPES: list(summary[CC_TYPE_DISTRIBUTION_KEY].keys()),
+        KEY_ANALYSIS_SUMMARY: summary
     }
 
     with open(file_path_json, "w", encoding="utf-8") as f:

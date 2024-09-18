@@ -4,7 +4,6 @@ inklusive dem Klonen, dem Laden von Commits und der Visualisierung.
 """
 
 from clone_repos import clone_repo
-from json_utils import load_json
 from repo_utils import load_commit_messages, save_commits_to_json
 from visualization_utils import visualize_repo_commits
 
@@ -31,7 +30,5 @@ def process_repo(repo_data, results_dir):
     # Speichern der Commits mit Metadaten als JSON
     file_path_json = save_commits_to_json(commit_messages, repo_name, results_dir)
 
-    # JSON-Daten laden und visualisieren
-    commits_from_json = load_json(file_path_json)
-    # if commits_from_json:
-    #      visualize_repo_commits(commits_from_json, repo_name)
+    # Visualisierung
+    visualize_repo_commits(file_path_json, repo_name)

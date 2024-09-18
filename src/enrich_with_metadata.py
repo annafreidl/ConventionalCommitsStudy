@@ -1,7 +1,7 @@
 from analysis import is_conventional_commit, is_conventional_custom, get_commit_type
-
-
 from collections import Counter
+from constants import *
+
 
 def enrich_commits_with_metadata(commits):
     """
@@ -26,9 +26,9 @@ def enrich_commits_with_metadata(commits):
             cc_type = get_commit_type(message)
             enriched_commit = {
                 **commit,
-                "is_conventional": True,
-                "cc_type": cc_type,
-                "custom_type": None
+                KEY_IS_CONVENTIONAL: True,
+                KEY_CC_TYPES: cc_type,
+                KEY_CUSTOM_TYPES: None
             }
             conventional_commits += 1
             if cc_type:
@@ -38,9 +38,9 @@ def enrich_commits_with_metadata(commits):
             custom_type = get_commit_type(message)
             enriched_commit = {
                 **commit,
-                "is_conventional": True,
-                "cc_type": None,
-                "custom_type": custom_type
+                KEY_IS_CONVENTIONAL: True,
+                KEY_CC_TYPES: None,
+                KEY_CUSTOM_TYPES: custom_type
             }
             conventional_commits += 1
             if custom_type:
@@ -49,9 +49,9 @@ def enrich_commits_with_metadata(commits):
         else:
             enriched_commit = {
                 **commit,
-                "is_conventional": False,
-                "cc_type": None,
-                "custom_type": None
+                KEY_IS_CONVENTIONAL: False,
+                KEY_CC_TYPES: None,
+                KEY_CUSTOM_TYPES: None
             }
             unconventional_commits += 1
 
@@ -59,11 +59,11 @@ def enrich_commits_with_metadata(commits):
 
     # Erstelle die Zusammenfassung
     summary = {
-        "total_commits": total_commits,
-        "conventional_commits": conventional_commits,
-        "unconventional_commits": unconventional_commits,
-        "custom_type_distribution": dict(custom_type_counter),
-        "cc_type_distribution": dict(cc_type_counter)
+        TOTAL_COMMITS_KEY: total_commits,
+        CONVENTIONAL_COMMITS_KEY: conventional_commits,
+        UNCONVENTIONAL_COMMITS_KEY: unconventional_commits,
+        CUSTOM_TYPE_DISTRIBUTION_KEY: dict(custom_type_counter),
+        CC_TYPE_DISTRIBUTION_KEY: dict(cc_type_counter)
     }
 
     return enriched_commits, summary
