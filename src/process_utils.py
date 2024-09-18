@@ -2,10 +2,8 @@
 Logik zum Verarbeiten der Repositories,
 inklusive dem Klonen, dem Laden von Commits und der Visualisierung.
 """
-
 from clone_repos import clone_repo
 from repo_utils import load_commit_messages, save_commits_to_json
-from visualization_utils import visualize_repo_commits
 
 
 def process_repo(repo_data, results_dir):
@@ -31,4 +29,4 @@ def process_repo(repo_data, results_dir):
     file_path_json = save_commits_to_json(commit_messages, repo_name, results_dir)
 
     # Visualisierung
-    visualize_repo_commits(file_path_json, repo_name)
+    # visualize_repo_commits(file_path_json, repo_name)

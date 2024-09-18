@@ -5,6 +5,7 @@
     <mapping directory="$PROJECT_DIR$/data/temp/12306" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/data/temp/30-Days-Of-Python" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/data/temp/AutoGPT" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/data/temp/AutoGPT_temp" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/data/temp/ChatGLM-6B" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/data/temp/ChatGPT" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/data/temp/ChatTTS" vcs="Git" />
@@ -44,6 +45,7 @@
     <mapping directory="$PROJECT_DIR$/data/temp/ansible" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/data/temp/awesome-machine-learning" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/data/temp/awesome-python" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/data/temp/awesome-python_temp" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/data/temp/bert" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/data/temp/big-list-of-naughty-strings" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/data/temp/black" vcs="Git" />
@@ -108,6 +110,7 @@
     <mapping directory="$PROJECT_DIR$/data/temp/pytorch-image-models" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/data/temp/pytorch-lightning" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/data/temp/pytorch-tutorial" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/data/temp/pytorch_temp" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/data/temp/quivr" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/data/temp/ray" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/data/temp/requests" vcs="Git" />
