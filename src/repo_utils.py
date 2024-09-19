@@ -40,7 +40,7 @@ def load_commit_messages(repo):
                     deletions = 0
                     while i < len(lines) and lines[i].strip() == '':
                         i += 1
-                    if i < len(lines) and 'file changed' in lines[i]:
+                    if i < len(lines) and ('file changed' in lines[i] or 'files changed' in lines[i]):
                         stat_line = lines[i].strip()
                         if 'insertion' in stat_line:
                             insertions = int(stat_line.split('insertion')[0].split(',')[-1].strip())
@@ -93,5 +93,5 @@ def save_commits_to_json(commit_messages, repo_name, results_dir):
 
     with open(file_path_json, "w", encoding="utf-8") as f:
         json.dump(json_data, f, indent=2)
-        f.flush()  # Leert den Puffer und erzwingt das Schreiben auf die Festplatte
+        f.flush()  # Leert den Puffer
     return file_path_json
