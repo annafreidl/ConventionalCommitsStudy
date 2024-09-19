@@ -4,8 +4,10 @@ inklusive dem Klonen, dem Laden von Commits und der Visualisierung.
 """
 from git import GitCommandError
 
+from analysis import find_80_percent_conventional_date
 from clone_repos import clone_repo
 from repo_utils import load_commit_messages, save_commits_to_json
+from visualization_utils import visualize_repo_commits
 
 
 def process_repo(repo_data, results_dir):
@@ -30,5 +32,7 @@ def process_repo(repo_data, results_dir):
     # Speichern der Commits mit Metadaten als JSON
     file_path_json = save_commits_to_json(commit_messages, repo_name, results_dir)
 
+    datum = find_80_percent_conventional_date(file_path_json)
+    print(f"Das Datum, ab dem 80 % der Commits konventionell waren: {datum}")
     # Visualisierung
     # visualize_repo_commits(file_path_json, repo_name)
