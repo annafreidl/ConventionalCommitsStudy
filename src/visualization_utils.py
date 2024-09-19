@@ -85,6 +85,42 @@ def visualize_type_distribution(type_distribution, title, x_label, top_n=20):
     plt.show()
 
 
+def visualize_monthly_conventional_commits(cc_type_data, custom_type_data):
+    """
+    Visualisiert den prozentualen Anteil konventioneller Commits mit cc_type und custom_type pro Monat.
+
+    Args:
+        cc_type_data (dict): Dictionary mit dem Jahr-Monat als Schlüssel und dem prozentualen Anteil konventioneller Commits mit cc_type.
+        custom_type_data (dict): Dictionary mit dem Jahr-Monat als Schlüssel und dem prozentualen Anteil konventioneller Commits mit custom_type.
+    """
+    # Sortiere die Monate chronologisch
+    months = sorted(cc_type_data.keys())
+    cc_type_percentages = [cc_type_data[month] for month in months]
+    custom_type_percentages = [custom_type_data[month] for month in months]
+
+    # Erstelle ein Liniendiagramm für beide Datensätze
+    plt.figure(figsize=(12, 6))  # Größeres Diagramm für bessere Lesbarkeit
+    plt.plot(months, cc_type_percentages, marker='o', linestyle='-', color='b', label='CC-Type')
+    plt.plot(months, custom_type_percentages, marker='s', linestyle='--', color='r', label='Custom-Type')
+
+    # Diagrammbeschriftungen
+    plt.title('Prozentualer Anteil konventioneller Commits pro Monat (CC-Type vs. Custom-Type)')
+    plt.xlabel('Monat')
+    plt.ylabel('Anteil konventioneller Commits (%)')
+
+    # X-Ticks reduzieren (z. B. nur jeden 6. Monat anzeigen) und Schriftgröße anpassen
+    plt.xticks(ticks=range(0, len(months), 6), labels=[months[i] for i in range(0, len(months), 6)], rotation=45,
+               ha='right', fontsize=10)
+
+    # Gitterlinien und Layout anpassen
+    plt.grid(True)
+    plt.legend(loc='best')  # Legende für beide Linien
+    plt.tight_layout()
+
+    # Plot anzeigen
+    plt.show()
+
+
 # Aufruf der Funktion im Hauptteil
 if __name__ == "__main__":
     visualize_type_distribution('C:\\Users\\annaf\\PycharmProjects\\Bachelorarbeit\\src\\results\\custom_types.json')
