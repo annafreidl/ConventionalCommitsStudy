@@ -1,3 +1,4 @@
+import math
 import re
 from collections import defaultdict
 from datetime import datetime
@@ -57,7 +58,7 @@ def get_commit_type(message):
     return None
 
 
-def find_80_percent_conventional_date(json_file_path):
+def find_80_percent_conventional_date(json_file_path, min_cc_percentage=0.8, min_cc_commits=10):
     """
     Findet das Datum, ab dem mindestens 80 % der Commits, die ab diesem Zeitpunkt gemacht wurden, "conventional" sind.
 
@@ -78,21 +79,32 @@ def find_80_percent_conventional_date(json_file_path):
     if total_commits == 0:
         return "Keine Commits verfügbar"
 
-    # Rückwärts durch die Commits gehen (von den ältesten zu den neuesten)
-    for i in range(total_commits - 1, -1, -1):
-        # Betrachte die verbleibenden Commits ab diesem Zeitpunkt
-        remaining_commits = total_commits - i  # Korrektur hier: verbleibende Commits ab diesem Index
-        remaining_commit_list = commits[0:i]  # Die Liste der verbleibenden Commits ab diesem Commit
+    total_conventional_commits = data.get("analysis_summary", {}).get("conventional_commits", 0)
+    if total_conventional_commits < min_cc_commits:
+        return "Summe der CC kleiner als 10"
 
-        # Zähle die konventionellen Commits unter den verbleibenden Commits
-        conventional_commits = sum(1 for commit in remaining_commit_list if commit.get("is_conventional"))
+    # Umkehren der Commit-Liste, sodass der älteste Commit an Index 0 steht
+    commits_reversed = commits[::-1]
 
-        # Debugging: Ausgabe, um zu sehen, wie viele konventionelle und verbleibende Commits es gibt
-        # print(f"Ab Commit {i}: {conventional_commits}/{i} sind konventionell")
+    # Kumulative Summe der konventionellen Commits berechnen
+    cum_conventional_commits = [0] * (total_commits + 1)
+    for i in range(1, total_commits + 1):
+        is_conv = 1 if commits_reversed[i - 1].get("is_conventional") else 0
+        cum_conventional_commits[i] = cum_conventional_commits[i - 1] + is_conv
 
-        # Berechne den Anteil der konventionellen Commits
-        if remaining_commits > 0 and (conventional_commits / (i+1)) >= 0.8:
-            return commits[i]['committed_datetime']  # Rückgabe des frühesten Datums
+    # Minimale Anzahl verbleibender Commits berechnen
+    min_remaining_commits = int(math.ceil(min_cc_commits / min_cc_percentage))
+
+    # Iterieren über die Commits
+    for i in range(total_commits):
+        num_remaining_commits = total_commits - i
+        if num_remaining_commits < min_remaining_commits:
+            break  # Nicht genug verbleibende Commits
+        conventional_commits = cum_conventional_commits[total_commits] - cum_conventional_commits[i]
+        cc_percentage = conventional_commits / num_remaining_commits
+
+        if cc_percentage >= min_cc_percentage and conventional_commits >= min_cc_commits:
+            return commits_reversed[i]['committed_datetime'][:10]  # Rückgabe des Datums ab diesem Commit
 
     return "Nicht genug konventionelle Commits gefunden"
 
