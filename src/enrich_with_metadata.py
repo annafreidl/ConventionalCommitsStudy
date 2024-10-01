@@ -10,7 +10,7 @@ def identify_consistent_custom_types(custom_type_counter, total_commits, min_abs
     Args:
         custom_type_counter (Counter): Counter mit der Häufigkeit der Custom Types.
         total_commits (int): Gesamtzahl der Commits.
-        min_absolute (int): Minimale absolute Häufigkeit.
+        min_absolute (int): Minimale absolute Häufigkeit. Hier 3
         min_percentage (float): Minimale prozentuale Häufigkeit (zwischen 0 und 100).
 
     Returns:
