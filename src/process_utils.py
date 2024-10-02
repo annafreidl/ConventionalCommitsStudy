@@ -32,13 +32,10 @@ def process_repo(repo_data, results_dir):
     # Speichern der Commits mit Metadaten als JSON
     file_path_json = save_commits_to_json(commit_messages, repo_name, results_dir)
 
-    datum = find_80_percent_conventional_date(file_path_json)
-    print(f"Das Datum, ab dem 80 % der Commits konventionell waren: {datum}")
-
     monthly_cc_type_percentage, monthly_custom_type_percentage = calculate_monthly_conventional_commits(file_path_json)
 
     # Visualisierung von prozentualer Verteilung der konventionellen Commits pro Monat
-    # visualize_monthly_conventional_commits(monthly_cc_type_percentage, monthly_custom_type_percentage)
+    visualize_monthly_conventional_commits(monthly_cc_type_percentage, monthly_custom_type_percentage)
 
     # Visualisierung
-    # visualize_repo_commits(file_path_json, repo_name)
+    #visualize_repo_commits(file_path_json, repo_name)

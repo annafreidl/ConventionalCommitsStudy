@@ -58,31 +58,11 @@ def get_commit_type(message):
     return None
 
 
-def find_80_percent_conventional_date(json_file_path, min_cc_percentage=0.8, min_cc_commits=10):
-    """
-    Findet das Datum, ab dem mindestens 80 % der Commits, die ab diesem Zeitpunkt gemacht wurden, "conventional" sind.
+def find_80_percent_conventional_date(commits, min_cc_percentage=0.8, min_cc_commits=10):
 
-    Args:
-        json_file_path (str): Pfad zur JSON-Datei, die die Commits und die Analyse enthält.
-
-    Returns:
-        str: Das Datum im Format 'YYYY-MM-DD', ab dem 80 % der Commits konventionell sind.
-    """
-    # JSON-Datei laden
-    data = load_json(json_file_path)
-
-    # Extrahiere die Commits
-    commits = data.get("commits", [])
-
-    # Extrahiere die Anzahl der Commits aus der analysis_summary
-    total_commits = data.get("analysis_summary", {}).get("total_commits", 0)
+    total_commits = len(commits)
     if total_commits == 0:
-        return "Keine Commits verfügbar"
-
-    total_conventional_commits = data.get("analysis_summary", {}).get("conventional_commits", 0)
-    if total_conventional_commits < min_cc_commits:
-        return "Summe der CC kleiner als 10"
-
+        return None  # Keine Commits verfügbar
     # Umkehren der Commit-Liste, sodass der älteste Commit an Index 0 steht
     commits_reversed = commits[::-1]
 
@@ -98,16 +78,23 @@ def find_80_percent_conventional_date(json_file_path, min_cc_percentage=0.8, min
     # Iterieren über die Commits
     for i in range(total_commits):
         num_remaining_commits = total_commits - i
+
+        # Überprüfe, ob genügend verbleibende Commits vorhanden sind
         if num_remaining_commits < min_remaining_commits:
             break  # Nicht genug verbleibende Commits
+
         conventional_commits = cum_conventional_commits[total_commits] - cum_conventional_commits[i]
         cc_percentage = conventional_commits / num_remaining_commits
 
+        # Überprüfe, ob sowohl der Mindestprozentsatz als auch die Mindestanzahl an konventionellen Commits erreicht sind
         if cc_percentage >= min_cc_percentage and conventional_commits >= min_cc_commits:
             return commits_reversed[i]['committed_datetime'][:10]  # Rückgabe des Datums ab diesem Commit
 
-    return "Nicht genug konventionelle Commits gefunden"
+    return None  # Nicht genug konventionelle Commits gefunden
 
+
+from collections import defaultdict
+from datetime import datetime
 
 def calculate_monthly_conventional_commits(json_file_path):
     """
@@ -117,7 +104,7 @@ def calculate_monthly_conventional_commits(json_file_path):
         json_file_path (str): Pfad zur JSON-Datei.
 
     Returns:
-        dict: Zwei Dictionaries:
+        tuple: Zwei Dictionaries:
               - Anteil der Commits mit cc_type pro Monat
               - Anteil der Commits mit custom_type pro Monat
     """
@@ -134,8 +121,12 @@ def calculate_monthly_conventional_commits(json_file_path):
     # Commits nach Monat gruppieren und konventionelle Commits mit cc_type und custom_type zählen
     for commit in commits:
         commit_date_str = commit.get("committed_datetime")
-        cc_type = commit.get("cc_types", None)
-        custom_type = commit.get("custom_types", None)
+        cc_type = commit.get("cc_type", None)
+        custom_type = commit.get("custom_type", None)
+
+        # Sicherstellen, dass commit_date_str nicht None ist
+        if not commit_date_str:
+            continue  # Überspringe Commits ohne Datum
 
         commit_date = datetime.fromisoformat(commit_date_str)
         year_month = commit_date.strftime("%Y-%m")
@@ -149,14 +140,15 @@ def calculate_monthly_conventional_commits(json_file_path):
 
     # Berechne den prozentualen Anteil pro Monat für cc_type und custom_type
     monthly_cc_type_percentage = {
-        month: (data["conventional_with_cc_type"] / data["total"]) * 100 if data["total"] > 0 else 0
-        for month, data in monthly_commits.items()
+        month: (counts["conventional_with_cc_type"] / counts["total"]) * 100 if counts["total"] > 0 else 0
+        for month, counts in monthly_commits.items()
     }
 
     monthly_custom_type_percentage = {
-        month: (data["conventional_with_custom_type"] / data["total"]) * 100 if data["total"] > 0 else 0
-        for month, data in monthly_commits.items()
+        month: (counts["conventional_with_custom_type"] / counts["total"]) * 100 if counts["total"] > 0 else 0
+        for month, counts in monthly_commits.items()
     }
 
     return monthly_cc_type_percentage, monthly_custom_type_percentage
+
 

@@ -1,6 +1,5 @@
-from analysis import is_conventional_commit, is_conventional_custom, get_commit_type
+from analysis import is_conventional_commit, is_conventional_custom, get_commit_type, find_80_percent_conventional_date
 from collections import Counter
-from constants import *
 
 
 def identify_consistent_custom_types(custom_type_counter, total_commits, min_absolute=3, min_percentage=0.00):
@@ -106,13 +105,21 @@ def enrich_commits_with_metadata(commits):
 
         enriched_commits.append(enriched_commit)
 
+    # **Compute the CC adoption date**
+    cc_adoption_date = find_80_percent_conventional_date(
+        enriched_commits,
+        min_cc_percentage=0.8,
+        min_cc_commits=10
+    )
+
     # Erstelle die Zusammenfassung
     summary = {
         'total_commits': total_commits,
         'conventional_commits': conventional_commits,
         'unconventional_commits': unconventional_commits,
         'custom_type_distribution': dict(custom_type_counter),
-        'cc_type_distribution': dict(cc_type_counter)
+        'cc_type_distribution': dict(cc_type_counter),
+        'cc_adoption_date': cc_adoption_date  # Add the date to the summary
     }
 
     return enriched_commits, summary
