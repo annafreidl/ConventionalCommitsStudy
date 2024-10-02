@@ -35,7 +35,7 @@ def process_repo(repo_data, results_dir):
     monthly_cc_type_percentage, monthly_custom_type_percentage = calculate_monthly_conventional_commits(file_path_json)
 
     # Visualisierung von prozentualer Verteilung der konventionellen Commits pro Monat
-    visualize_monthly_conventional_commits(monthly_cc_type_percentage, monthly_custom_type_percentage)
+    # visualize_monthly_conventional_commits(monthly_cc_type_percentage, monthly_custom_type_percentage)
 
     # Visualisierung
     #visualize_repo_commits(file_path_json, repo_name)

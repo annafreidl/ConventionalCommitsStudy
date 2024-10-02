@@ -7,6 +7,23 @@ from conventional_pre_commit.format import is_conventional
 # Globale Liste zum Speichern der benutzerdefinierten Typen
 from json_utils import load_json
 
+def parse_commit_message(message):
+    """
+    Parst eine Commit-Nachricht und gibt den Typ, Scope, Breaking-Change-Indikator und Beschreibung zurück.
+    """
+    pattern = r"^([a-zA-Z]+)(?:\(([\w\-\.\s]+)\))?(!)?: (.+)"
+    match = re.match(pattern, message.lower())
+    if match:
+        commit_type = match.group(1)
+        scope = match.group(2)
+        if scope:
+            scope = scope.strip()
+        breaking = match.group(3) == '!'
+        description = match.group(4)
+        return {'type': commit_type, 'scope': scope, 'breaking': breaking, 'description': description}
+    return None
+
+
 custom_types = []
 
 
@@ -14,48 +31,37 @@ def is_conventional_commit(commit_message):
     """
     Prüft, ob eine Commit-Nachricht der CC-Convention entspricht.
     """
-
-    # wichtig, dass die Nachricht in Kleinbuchstaben umgewandelt wird,
-    # damit alle Typen mit is_conventional gefunden werden
-    commit_message = commit_message.lower()
-
-    # Unterscheidung zwischen custom und CC
-    if is_conventional(commit_message):
+    cc_types = ["feat", "fix", "docs", "style", "refactor", "perf",
+                "test", "build", "ci", "chore", "revert"]
+    parsed = parse_commit_message(commit_message)
+    if parsed and parsed['type'] in cc_types:
         return True
-    else:
-        return False
+    return False
+
 
 
 def is_conventional_custom(commit_message):
     """
     Prüft, ob eine Commit-Nachricht der CC-Convention mit custom Typen entspricht.
     """
-    pattern = r"^([a-zA-Z]+)(?:\(([\w\-\.\s]+)\))?!?: .+"
-
-    match = re.match(pattern, commit_message.lower())
-    if match:
-        custom_type = match.group(1)
-        custom_types.append(custom_type)  # Füge den Typ der globalen Liste hinzu
+    cc_types = ["feat", "fix", "docs", "style", "refactor", "perf",
+                "test", "build", "ci", "chore", "revert"]
+    parsed = parse_commit_message(commit_message)
+    if parsed and parsed['type'] not in cc_types:
         return True
     return False
 
 
+
 def get_commit_type(message):
     """
-    Extrahiert den Commit-Typ (wie 'feat', 'fix', etc.) oder einen benutzerdefinierten Typ aus einer Commit-Nachricht.
-
-    Args:
-        message (str): Die Commit-Nachricht.
-
-    Returns:
-        str: Der Commit-Typ (z.B. 'feat', 'fix' oder 'custom-feature'), falls vorhanden.
-        None: Falls kein Commit-Typ gefunden wird.
+    Extrahiert den Commit-Typ aus einer Commit-Nachricht.
     """
-    pattern = r"^([a-zA-Z]+)(?:\([\w\-\.\s]+\))?!?: .+"
-    match = re.match(pattern, message.lower())
-    if match:
-        return match.group(1)  # Typ wie 'feat', 'fix', oder 'custom-feature'
+    parsed = parse_commit_message(message)
+    if parsed:
+        return parsed['type']
     return None
+
 
 
 def find_80_percent_conventional_date(commits, min_cc_percentage=0.8, min_cc_commits=10):
