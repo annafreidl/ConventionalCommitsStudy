@@ -1,8 +1,6 @@
 from analysis import is_conventional_commit, is_conventional_custom, get_commit_type, find_80_percent_conventional_date
 from collections import Counter
 
-from analysis.conventional_commits import parse_commit_message
-
 
 def identify_consistent_custom_types(custom_type_counter, total_commits, min_absolute=3, min_percentage=0.00):
     """
@@ -29,47 +27,41 @@ def enrich_commits_with_metadata(commits):
     enriched_commits = []
 
     # Initialisiere Zähler und Counter für die Zusammenfassung
-    total_commits = 0
+    total_commits = len(commits)
     conventional_commits = 0
     unconventional_commits = 0
-    # Temporärer Counter für alle Custom Types
-    all_custom_type_counter = Counter()
-    # Temporärer Counter für alle CC Types
-    all_cc_type_counter = Counter()
-
-    # Zähler für cc_type_commits und custom_type_commits
     cc_type_commits = 0
     custom_type_commits = 0
+
+    all_custom_type_counter = Counter()
+    all_cc_type_counter = Counter()
 
     cc_types = ["feat", "fix", "docs", "style", "refactor", "perf",
                 "test", "build", "ci", "chore", "revert"]
 
     # Erster Durchlauf: Sammle alle Custom Types und CC Types
     for commit in commits:
-        total_commits += 1
         message = commit.get("message", "")
-        parsed = parse_commit_message(message)
-        if parsed:
-            commit_type = parsed['type']
-            if commit_type in cc_types:
+        commit_type = get_commit_type(message)
+        if commit_type:
+            if is_conventional_commit(message):
                 all_cc_type_counter[commit_type] += 1
-            else:
+            elif is_conventional_custom(message):
                 all_custom_type_counter[commit_type] += 1
 
     # Identifiziere konsistente Custom Types
     consistent_custom_types = identify_consistent_custom_types(all_custom_type_counter, total_commits)
 
     # Re-Initialisiere die Counter für den zweiten Durchlauf
-    custom_type_counter = Counter()
     cc_type_counter = Counter()
+    custom_type_counter = Counter()
 
     # Zweiter Durchlauf: Markiere Commits entsprechend und aktualisiere Zähler
     for commit in commits:
         message = commit.get("message", "")
-        parsed = parse_commit_message(message)
-        if parsed:
-            commit_type = parsed['type']
-            if commit_type in cc_types:
+        commit_type = get_commit_type(message)
+        if commit_type:
+            if is_conventional_commit(message):
                 # Standard CC Commit
                 enriched_commit = {
                     **commit,
@@ -80,7 +72,7 @@ def enrich_commits_with_metadata(commits):
                 conventional_commits += 1
                 cc_type_commits += 1
                 cc_type_counter[commit_type] += 1
-            elif commit_type in consistent_custom_types:
+            elif is_conventional_custom(message) and commit_type in consistent_custom_types:
                 # Konsistenter Custom Type
                 enriched_commit = {
                     **commit,
@@ -101,7 +93,7 @@ def enrich_commits_with_metadata(commits):
                 }
                 unconventional_commits += 1
         else:
-            # Unkonventioneller Commit
+            # Unkonventioneller Commit (kein Typ erkannt)
             enriched_commit = {
                 **commit,
                 'is_conventional': False,
@@ -123,21 +115,21 @@ def enrich_commits_with_metadata(commits):
         'cc_type_distribution': dict(cc_type_counter),
     }
 
-    # Überprüfe, ob cc_type_commits > custom_type_commits ist
-    if cc_type_commits > custom_type_commits:
+    # Überprüfe, ob cc_type_commits > 200
+    if cc_type_commits > 200:
         # Berechne das CC-Einführungsdatum
         cc_adoption_date = find_80_percent_conventional_date(
             enriched_commits,
-            min_cc_percentage=0.8,
+            min_cc_percentage=0.6,
             min_cc_commits=10
         )
         summary['cc_adoption_date'] = cc_adoption_date
+        if cc_adoption_date is not None:
+            print(f"\n CC-Einführungsdatum: {cc_adoption_date}\n")
     else:
         # Setze das CC-Einführungsdatum auf None
         summary['cc_adoption_date'] = None
-        print("Mehr konventionelle Commits mit Custom Types als mit Standard-CC-Types gefunden. CC-Einführungsdatum wird nicht berechnet.")
+        print(
+            "Zu wenige Commits mit CC-Typen ")
 
     return enriched_commits, summary
-
-
-

@@ -2,10 +2,6 @@ import math
 import re
 from collections import defaultdict
 from datetime import datetime
-from conventional_pre_commit.format import is_conventional
-
-# Globale Liste zum Speichern der benutzerdefinierten Typen
-from json_utils import load_json
 
 def parse_commit_message(message):
     """
@@ -22,10 +18,6 @@ def parse_commit_message(message):
         description = match.group(4)
         return {'type': commit_type, 'scope': scope, 'breaking': breaking, 'description': description}
     return None
-
-
-custom_types = []
-
 
 def is_conventional_commit(commit_message):
     """
@@ -99,27 +91,18 @@ def find_80_percent_conventional_date(commits, min_cc_percentage=0.8, min_cc_com
     return None  # Nicht genug konventionelle Commits gefunden
 
 
-from collections import defaultdict
-from datetime import datetime
-
-def calculate_monthly_conventional_commits(json_file_path):
+def calculate_monthly_conventional_commits(commits):
     """
     Berechnet den prozentualen Anteil der konventionellen Commits mit cc_type und custom_type für jeden Monat.
 
     Args:
-        json_file_path (str): Pfad zur JSON-Datei.
+        commits (list): Liste der angereicherten Commits.
 
     Returns:
         tuple: Zwei Dictionaries:
               - Anteil der Commits mit cc_type pro Monat
               - Anteil der Commits mit custom_type pro Monat
     """
-    # JSON-Daten laden
-    data = load_json(json_file_path)
-
-    # Extrahiere die Commits
-    commits = data.get("commits", [])
-
     # Dictionary, um die Anzahl der Commits pro Monat zu speichern
     monthly_commits = defaultdict(
         lambda: {"total": 0, "conventional_with_cc_type": 0, "conventional_with_custom_type": 0})
@@ -156,5 +139,3 @@ def calculate_monthly_conventional_commits(json_file_path):
     }
 
     return monthly_cc_type_percentage, monthly_custom_type_percentage
-
-

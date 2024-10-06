@@ -1,23 +1,21 @@
 import matplotlib.pyplot as plt
 from json_utils import load_json
+import json
+from pathlib import Path
+import matplotlib.pyplot as plt
 
-def visualize_repo_commits(json_file_path, repo_name):
+def visualize_repo_commits(enriched_commits, summary, repo_name):
     """
-    Visualisiert Commit-Daten eines Repositories basierend auf einer JSON-Datei.
+    Visualisiert Commit-Daten eines Repositories basierend auf den angereicherten Commits und der Zusammenfassung.
     """
-    data = load_json(json_file_path)
-    if data is None:
-        print(f"Fehler beim Laden der JSON-Datei für {repo_name}.")
-        return
-
-    analysis_summary = data.get('analysis_summary', {})
-    custom_type_distribution = analysis_summary.get('custom_type_distribution', {})
-    cc_type_distribution = analysis_summary.get('cc_type_distribution', {})
+    custom_type_distribution = summary.get('custom_type_distribution', {})
+    cc_type_distribution = summary.get('cc_type_distribution', {})
 
     # Visualisierungsfunktionen aufrufen
-    visualize_cc_ratio(analysis_summary, repo_name)
+    visualize_cc_ratio(summary, repo_name)
     visualize_type_distribution(custom_type_distribution, f'Custom Types in {repo_name}', 'Custom Types')
     visualize_type_distribution(cc_type_distribution, f'CC Types in {repo_name}', 'CC Types')
+
 
 
 def visualize_pie_chart(conventional_count, unconventional_count, project_name):
@@ -118,6 +116,56 @@ def visualize_monthly_conventional_commits(cc_type_data, custom_type_data):
     plt.tight_layout()
 
     # Plot anzeigen
+    plt.show()
+
+
+
+def plot_cc_adoption_dates(results_dir):
+    """
+    Iteriert über alle JSON-Dateien im angegebenen Verzeichnis,
+    prüft, ob 'cc_adoption_date' gesetzt ist und erstellt ein Kreisdiagramm.
+
+    Args:
+        results_dir (Path): Pfad zum Verzeichnis mit den JSON-Dateien.
+
+    Returns:
+        None
+    """
+    total_files = 0
+    non_null_cc_adoption = 0
+
+    # Iteriere über alle JSON-Dateien im Verzeichnis
+    for json_file in results_dir.glob('*.json'):
+        total_files += 1
+        print(total_files)
+        try:
+            with open(json_file, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            # Zugriff auf 'cc_adoption_date' innerhalb von 'analysis_summary'
+            cc_adoption_date = data.get('analysis_summary', {}).get('cc_adoption_date', None)
+            if cc_adoption_date is not None:
+                non_null_cc_adoption += 1
+                print("CC-Adoption in", non_null_cc_adoption)
+                print("Projektname: ", Path(json_file).name.split('.')[0])  # Gibt den Namen ohne Dateierweiterung aus
+
+        except json.JSONDecodeError:
+            print(f"Fehler beim Dekodieren der JSON-Datei: {json_file}")
+        except Exception as e:
+            print(f"Fehler beim Lesen der Datei {json_file}: {e}")
+
+    # Berechne die Anzahl der Dateien ohne gesetztes 'cc_adoption_date'
+    null_cc_adoption = total_files - non_null_cc_adoption
+
+    # Daten für das Kreisdiagramm
+    labels = ['cc_adoption_date gesetzt', 'cc_adoption_date null']
+    sizes = [non_null_cc_adoption, null_cc_adoption]
+    colors = ['green', 'red']  # Farben für die Segmente
+
+    # Erstelle das Kreisdiagramm
+    fig, ax = plt.subplots()
+    ax.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=90, colors=colors)
+    ax.axis('equal')  # Gleiches Seitenverhältnis, um den Kreis zu wahren
+    plt.title('Verteilung der cc_adoption_date in den JSON-Dateien')
     plt.show()
 
 
