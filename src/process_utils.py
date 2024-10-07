@@ -1,3 +1,5 @@
+from pathlib import Path
+
 """
 Logik zum Verarbeiten der Repositories,
 inklusive dem Klonen, dem Laden von Commits und der Visualisierung.
@@ -22,24 +24,29 @@ def process_repo(repo_data, results_dir):
         print(f"Überspringe Repository {repo_data['name']} aufgrund eines Klonfehlers.")
         return
 
-    try:
-        # Lade die Commits mit der aktualisierten Funktion
-        commit_messages = load_commit_messages(cloned_repo)
+    result_path = Path(results_dir)/f"{repo_data['name']}_commit_messages.json"
 
-        # Reiche die Commits direkt an
-        enriched_commits, summary = enrich_commits_with_metadata(commit_messages)
-    except (AttributeError, GitCommandError) as e:
-        print(f"Fehler beim Laden der Commit-Nachrichten für {repo_data['name']}: {e}")
-        return
+    if not result_path.exists():
+        try:
+            # Lade die Commits mit der aktualisierten Funktion
+            commit_messages = load_commit_messages(cloned_repo)
 
-    repo_name = repo_data["name"].replace("/", "_")
+            # Reiche die Commits direkt an
+            enriched_commits, summary = enrich_commits_with_metadata(commit_messages)
+        except (AttributeError, GitCommandError) as e:
+            print(f"Fehler beim Laden der Commit-Nachrichten für {repo_data['name']}: {e}")
+            return
 
-    # Speichern der angereicherten Commits als JSON
-    file_path_json = save_commits_to_json(enriched_commits, summary, repo_name, results_dir)
+        repo_name = repo_data["name"].replace("/", "_")
 
-    # Weitere Verarbeitung oder Visualisierung hier
-    monthly_cc_type_percentage, monthly_custom_type_percentage = calculate_monthly_conventional_commits(enriched_commits)
-    #visualize_monthly_conventional_commits(monthly_cc_type_percentage, monthly_custom_type_percentage)
+        # Speichern der angereicherten Commits als JSON
+        file_path_json = save_commits_to_json(enriched_commits, summary, repo_name, results_dir)
 
-    # Visualisierung
-    # visualize_repo_commits(file_path_json, summary, repo_name)
+        # Weitere Verarbeitung oder Visualisierung hier
+        monthly_cc_type_percentage, monthly_custom_type_percentage = calculate_monthly_conventional_commits(enriched_commits)
+        #visualize_monthly_conventional_commits(monthly_cc_type_percentage, monthly_custom_type_percentage)
+
+        # Visualisierung
+        # visualize_repo_commits(file_path_json, summary, repo_name)
+
+    else: print(f"Commits für {repo_data['name']} bereits vorhanden.")

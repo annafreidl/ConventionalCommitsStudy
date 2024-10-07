@@ -12,8 +12,8 @@ def load_dataset(yaml_path):
             data = yaml.safe_load(file)
 
         extracted_data = [
-            {"name": d["name"], "clone_url": d["clone_url"]}
-            for d in data if "name" in d and "clone_url" in d
+            {"name": d["name"], "clone_url": d["clone_url"], "language": d["language"]}
+            for d in data if "name" in d and "clone_url" in d and "language" in d
         ]
 
         with open(json_path, "w", encoding='utf-8') as file:
