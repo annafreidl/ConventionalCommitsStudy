@@ -1,26 +1,29 @@
 # data_enricher.py
 
 from collections import Counter
-from analysis import (
-    is_conventional_commit,
-    is_conventional_custom,
-    get_commit_type,
-    find_80_percent_conventional_date
-)
+from data_enricher import *
+from analyzer import find_80_percent_conventional_date
 
 
-def identify_consistent_custom_types(custom_type_counter, total_commits, min_absolute=3):
+def identify_consistent_custom_types(custom_type_counter, total_commits, min_absolute=3, min_percentage=0.00):
     """
-    Identifiziert konsistente Custom Types.
+    Identifiziert konsistente Custom Types basierend auf ihrer Häufigkeit.
 
     Args:
-        custom_type_counter (Counter): Zähler für Custom Types.
+        custom_type_counter (Counter): Counter mit der Häufigkeit der Custom Types.
         total_commits (int): Gesamtzahl der Commits.
+        min_absolute (int): Minimale absolute Häufigkeit. Hier 3
+        min_percentage (float): Minimale prozentuale Häufigkeit (zwischen 0 und 100).
 
     Returns:
-        set: Set von konsistenten Custom Types.
+        set: Menge der konsistenten Custom Types.
     """
-    return {ctype for ctype, count in custom_type_counter.items() if count >= min_absolute}
+    consistent_custom_types = set()
+    for custom_type, count in custom_type_counter.items():
+        percentage = (count / total_commits) * 100
+        if count >= min_absolute and percentage >= min_percentage:
+            consistent_custom_types.add(custom_type)
+    return consistent_custom_types
 
 
 def enrich_commits(commits):
@@ -124,3 +127,54 @@ def enrich_commits(commits):
         summary['cc_adoption_date'] = None
 
     return enriched_commits, summary
+
+
+def parse_commit_message(message):
+    """
+    Parst eine Commit-Nachricht und gibt den Typ, Scope, Breaking-Change-Indikator und Beschreibung zurück.
+    """
+    pattern = r"^([a-zA-Z]+)(?:\(([\w\-\.\s]+)\))?(!)?: (.+)"
+    match = re.match(pattern, message.lower())
+    if match:
+        commit_type = match.group(1)
+        scope = match.group(2)
+        if scope:
+            scope = scope.strip()
+        breaking = match.group(3) == '!'
+        description = match.group(4)
+        return {'type': commit_type, 'scope': scope, 'breaking': breaking, 'description': description}
+    return None
+
+
+def is_conventional_commit(commit_message):
+    """
+    Prüft, ob eine Commit-Nachricht der CC-Convention entspricht.
+    """
+    cc_types = ["feat", "fix", "docs", "style", "refactor", "perf",
+                "test", "build", "ci", "chore", "revert"]
+    parsed = parse_commit_message(commit_message)
+    if parsed and parsed['type'] in cc_types:
+        return True
+    return False
+
+
+def is_conventional_custom(commit_message):
+    """
+    Prüft, ob eine Commit-Nachricht der CC-Convention mit custom Typen entspricht.
+    """
+    cc_types = ["feat", "fix", "docs", "style", "refactor", "perf",
+                "test", "build", "ci", "chore", "revert"]
+    parsed = parse_commit_message(commit_message)
+    if parsed and parsed['type'] not in cc_types:
+        return True
+    return False
+
+
+def get_commit_type(message):
+    """
+    Extrahiert den Commit-Typ aus einer Commit-Nachricht.
+    """
+    parsed = parse_commit_message(message)
+    if parsed:
+        return parsed['type']
+    return None
