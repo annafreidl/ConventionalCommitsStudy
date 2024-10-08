@@ -3,5 +3,12 @@
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/src/path/to/temp/Sprache-Python/AutoGPT" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/src/path/to/temp/Sprache-Python/Python" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/src/path/to/temp/Sprache-Python/Python-100-Days" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/src/path/to/temp/Sprache-Python/awesome-python" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/src/path/to/temp/Sprache-Python/public-apis" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/src/path/to/temp/Sprache-Python/stable-diffusion-webui" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/src/path/to/temp/Sprache-Python/system-design-primer" vcs="Git" />
   </component>
 </project>

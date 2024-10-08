@@ -1,8 +1,7 @@
-import matplotlib.pyplot as plt
-from json_utils import load_json
 import json
 from pathlib import Path
 import matplotlib.pyplot as plt
+
 
 def visualize_repo_commits(enriched_commits, summary, repo_name):
     """
@@ -15,7 +14,6 @@ def visualize_repo_commits(enriched_commits, summary, repo_name):
     visualize_cc_ratio(summary, repo_name)
     visualize_type_distribution(custom_type_distribution, f'Custom Types in {repo_name}', 'Custom Types')
     visualize_type_distribution(cc_type_distribution, f'CC Types in {repo_name}', 'CC Types')
-
 
 
 def visualize_pie_chart(conventional_count, unconventional_count, project_name):
@@ -117,7 +115,6 @@ def visualize_monthly_conventional_commits(cc_type_data, custom_type_data):
 
     # Plot anzeigen
     plt.show()
-
 
 
 def plot_cc_adoption_dates(results_dir):

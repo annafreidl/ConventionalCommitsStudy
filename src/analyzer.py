@@ -1,8 +1,32 @@
-import os
+# analyzer.py
+
 import re
 from pathlib import Path
 import json
 
+def classify_repository(analysis_summary, using_cc):
+    """
+    Klassifiziert das Repository basierend auf der Analyse und der CC-Nutzung.
+
+    Args:
+        analysis_summary (dict): Zusammenfassung der Analyse.
+        using_cc (bool): Ob CC verwendet wird.
+
+    Returns:
+        str: Klassifikation des Repositories.
+    """
+    adoption_date_exists = analysis_summary.get("cc_adoption_date") is not None
+
+    if not using_cc and not adoption_date_exists:
+        return "nicht conventional"
+    elif not using_cc and adoption_date_exists:
+        return "nutzen CC, aber nicht als Vorgabe erkennbar"
+    elif using_cc and adoption_date_exists:
+        return "nutzen CC und als Vorgabe erkennbar"
+    elif using_cc and not adoption_date_exists:
+        return "Vorgabe/Erwähnung von CC, aber wird nicht genutzt"
+    else:
+        return "nicht eindeutig klassifizierbar"
 
 def search_for_cc_indications(repo_instance):
     """

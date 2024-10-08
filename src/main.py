@@ -1,6 +1,6 @@
 from pathlib import Path
-from load_dataset import load_dataset
-from process_utils import process_repo
+from data_saver import load_dataset
+from process_repository import process_repository
 from visualization_utils import plot_cc_adoption_dates
 
 FILE = Path(__file__).resolve()
@@ -19,7 +19,7 @@ if __name__ == "__main__":
 
     for repo_data in repos:
         i += 1
-        process_repo(repo_data, RESULTS)
+        process_repository(repo_data, RESULTS)
         print(f"Processed {i} repos")
 
     plot_cc_adoption_dates(RESULTS)
