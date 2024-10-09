@@ -4,7 +4,7 @@ from pathlib import Path
 import json
 import math
 import re
-from collections import defaultdict
+from collections import defaultdict, Counter
 from datetime import datetime
 
 def classify_repository(analysis_summary, using_cc):
@@ -290,3 +290,150 @@ def calculate_monthly_conventional_commits(commits):
     }
 
     return monthly_cc_type_percentage, monthly_custom_type_percentage
+
+
+# analyzer.py
+
+def filter_repositories(classifications, target_classification='nutzen CC und als Vorgabe erkennbar'):
+    """
+    Filtert Repositories basierend auf der Zielklassifikation.
+
+    Args:
+        classifications (dict): Dictionary mit Sprache als Schlüssel und Repositories als Wert.
+        target_classification (str): Die Klassifikation, nach der gefiltert werden soll.
+
+    Returns:
+        dict: Gefiltertes Dictionary mit Sprache als Schlüssel und Liste von Repository-Namen als Wert.
+    """
+    filtered_repos = {}
+
+    for language, repos in classifications.items():
+        matching_repos = [repo_name for repo_name, classification in repos.items() if classification == target_classification]
+        if matching_repos:
+            filtered_repos[language] = matching_repos
+
+    return filtered_repos
+
+import datetime
+
+def analyze_repository_from_existing_data(repo_name, results_dir):
+    """
+    Analysiert die vorhandenen Commit-Daten eines Repositories hinsichtlich CC-Konsistenz und Commit-Typ-Verteilung,
+    berücksichtigt dabei nur Commits nach dem cc_adoption_date.
+
+    Args:
+        repo_name (str): Name des Repositories.
+        results_dir (Path): Pfad zum Verzeichnis mit den JSON-Daten der Repositories.
+
+    Returns:
+        dict: Analyseergebnisse, einschließlich CC-Konsistenz und Commit-Typ-Verteilung.
+    """
+    # Lade die angereicherten Commit-Daten
+    repo_json_file = results_dir / f"{repo_name}_commit_messages.json"
+    if not repo_json_file.exists():
+        print(f"Commit-Daten für Repository {repo_name} nicht gefunden.")
+        return None
+
+    with open(repo_json_file, 'r', encoding='utf-8') as f:
+        data = json.load(f)
+
+    commits = data.get('commits', [])
+    analysis_summary = data.get('analysis_summary', {})
+
+    cc_adoption_date_str = analysis_summary.get('cc_adoption_date')
+    if not cc_adoption_date_str:
+        print(f"CC-Einführungsdatum für Repository {repo_name} nicht gefunden.")
+        return None
+
+    # Versuche, das Datum zu parsen
+    try:
+        # Wenn das Datum das Zeitformat enthält
+        cc_adoption_date = datetime.datetime.strptime(cc_adoption_date_str, "%Y-%m-%dT%H:%M:%S")
+    except ValueError:
+        try:
+            # Wenn das Datum nur das Datum ohne Zeit enthält
+            cc_adoption_date = datetime.datetime.strptime(cc_adoption_date_str, "%Y-%m-%d")
+        except ValueError:
+            print(f"Ungültiges Datumsformat für cc_adoption_date in Repository {repo_name}: {cc_adoption_date_str}")
+            return None
+
+    # Filtere die Commits nach cc_adoption_date
+    commits_after_adoption = []
+    for commit in commits:
+        commit_date_str = commit.get('committed_datetime')
+        commit_date = datetime.datetime.strptime(commit_date_str, "%Y-%m-%dT%H:%M:%S")
+        if commit_date >= cc_adoption_date:
+            commits_after_adoption.append(commit)
+
+    total_commits = len(commits_after_adoption)
+    if total_commits == 0:
+        print(f"Keine Commits nach CC-Einführung für Repository {repo_name} gefunden.")
+        return None
+
+    # CC-Konsistenz analysieren
+    conventional_commits = [commit for commit in commits_after_adoption if commit.get('is_conventional')]
+    cc_commit_ratio = len(conventional_commits) / total_commits * 100
+
+    # Commit-Typ-Verteilung analysieren
+    cc_types = [commit.get('cc_type') for commit in conventional_commits if commit.get('cc_type')]
+    custom_types = [commit.get('custom_type') for commit in conventional_commits if commit.get('custom_type')]
+
+    from collections import Counter
+    cc_type_distribution = Counter(cc_types)
+    custom_type_distribution = Counter(custom_types)
+
+    # Zusammenführen der CC-Typen und Custom-Typen
+    type_distribution = cc_type_distribution + custom_type_distribution
+
+    # Entferne None-Schlüssel
+    type_distribution.pop(None, None)
+
+    analysis_results = {
+        'repo_name': repo_name,
+        'total_commits': total_commits,
+        'conventional_commits': len(conventional_commits),
+        'cc_commit_ratio': cc_commit_ratio,
+        'type_distribution': dict(type_distribution)
+    }
+
+    return analysis_results
+
+
+# analyzer.py
+
+def analyze_repositories_by_language(filtered_repos, results_dir):
+    """
+    Analysiert Repositories nach Sprache unter Verwendung vorhandener Daten und aggregiert die Type Distribution pro Sprache.
+
+    Args:
+        filtered_repos (dict): Gefilterte Repositories mit Sprache als Schlüssel und Repository-Namen als Wert.
+        results_dir (Path): Pfad zum Verzeichnis mit den JSON-Daten der Repositories.
+
+    Returns:
+        dict: Analysedaten mit Sprache als Schlüssel und Analyseergebnissen als Wert.
+    """
+    analysis_by_language = {}
+
+    for language, repo_names in filtered_repos.items():
+        total_commits_language = 0
+        conventional_commits_language = 0
+        type_distribution_language = Counter()
+
+        for repo_name in repo_names:
+            result = analyze_repository_from_existing_data(repo_name, results_dir)
+            if result:
+                total_commits_language += result['total_commits']
+                conventional_commits_language += result['conventional_commits']
+                type_distribution_language.update(result['type_distribution'])
+
+        if total_commits_language > 0:
+            cc_commit_ratio_language = (conventional_commits_language / total_commits_language) * 100
+            analysis_by_language[language] = {
+                'total_commits': total_commits_language,
+                'conventional_commits': conventional_commits_language,
+                'cc_commit_ratio': cc_commit_ratio_language,
+                'type_distribution': dict(type_distribution_language)
+            }
+
+    return analysis_by_language
+

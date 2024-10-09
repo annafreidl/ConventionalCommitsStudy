@@ -3,7 +3,9 @@ from collections import defaultdict
 from pathlib import Path
 import matplotlib.pyplot as plt
 
+from analyzer import filter_repositories, analyze_repositories_by_language
 from constants import ROOT
+from data_saver import load_classifications
 
 
 def visualize_repo_commits(enriched_commits, summary, repo_name):
@@ -209,7 +211,7 @@ def plot_classification_by_language(classification_file, output_dir):
         # Werte über die Balken schreiben
         for bar, count in zip(bars, counts):
             yval = bar.get_height()
-            plt.text(bar.get_x() + bar.get_width()/2.0, yval + 0.1, int(count), ha='center', va='bottom')
+            plt.text(bar.get_x() + bar.get_width() / 2.0, yval + 0.1, int(count), ha='center', va='bottom')
 
         plt.tight_layout()
 
@@ -220,5 +222,138 @@ def plot_classification_by_language(classification_file, output_dir):
         plt.close()
 
 
+# visualization_utils.py
+
+def plot_cc_consistency_per_language(analysis_by_language, output_dir):
+    """
+    Plottet die CC-Konsistenz pro Sprache.
+
+    Args:
+        analysis_by_language (dict): Analysedaten gruppiert nach Sprache.
+        output_dir (Path): Verzeichnis zum Speichern des Plots.
+    """
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    languages = list(analysis_by_language.keys())
+    cc_ratios = [analysis_by_language[lang]['cc_commit_ratio'] for lang in languages]
+
+    plt.figure(figsize=(10, 6))
+    bars = plt.bar(languages, cc_ratios, color='#87CEEB')
+    plt.xlabel('Programmiersprachen')
+    plt.ylabel('CC Commit Ratio (%)')
+    plt.title('CC-Konsistenz pro Programmiersprache')
+    plt.xticks(rotation=45, ha='right')
+
+    # Werte über die Balken schreiben
+    for bar, ratio in zip(bars, cc_ratios):
+        yval = bar.get_height()
+        plt.text(bar.get_x() + bar.get_width()/2.0, yval + 1, f'{ratio:.1f}%', ha='center', va='bottom')
+
+    plt.tight_layout()
+    # Plot speichern
+    output_file = output_dir / f"cc_consistency_per_language.png"
+    plt.savefig(output_file)
+    plt.close()
+
+# visualization_utils.py
+
+def plot_commit_type_distribution_per_language(analysis_by_language, output_dir, top_n=10):
+    """
+    Plottet die Commit-Typ-Verteilung pro Programmiersprache.
+
+    Args:
+        analysis_by_language (dict): Analysedaten gruppiert nach Sprache.
+        output_dir (Path): Verzeichnis zum Speichern der Plots.
+        top_n (int): Anzahl der Top-Typen, die geplottet werden sollen.
+    """
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    for language, data in analysis_by_language.items():
+        type_distribution = data['type_distribution']
+
+        # Sortiere die Typen nach Häufigkeit
+        sorted_types = sorted(type_distribution.items(), key=lambda item: item[1], reverse=True)
+        types = [item[0] for item in sorted_types[:top_n]]
+        counts = [item[1] for item in sorted_types[:top_n]]
+
+        plt.figure(figsize=(10, 6))
+        bars = plt.bar(types, counts, color='#87CEEB')
+        plt.xlabel('Commit-Typen')
+        plt.ylabel('Häufigkeit')
+        plt.title(f'Commit-Typ-Verteilung für {language}')
+        plt.xticks(rotation=45, ha='right')
+
+        # Werte über die Balken schreiben
+        for bar, count in zip(bars, counts):
+            yval = bar.get_height()
+            plt.text(bar.get_x() + bar.get_width()/2.0, yval + 0.1, int(count), ha='center', va='bottom')
+
+        plt.tight_layout()
+        # Plot speichern
+        safe_language_name = language.replace(" ", "_").replace("/", "_")
+        output_file = output_dir / f"commit_type_distribution_{safe_language_name}.png"
+        plt.savefig(output_file)
+        plt.close()
+
+
+def plot_commit_type_distribution(analysis_by_language, output_dir):
+    """
+    Plottet die Commit-Typ-Verteilung pro Repository für jede Sprache.
+
+    Args:
+        analysis_by_language (dict): Analysedaten gruppiert nach Sprache.
+        output_dir (Path): Verzeichnis zum Speichern der Plots.
+    """
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    for language, analyses in analysis_by_language.items():
+        for result in analyses:
+            repo_name = result['repo_name']
+            type_distribution = result['type_distribution']
+
+            types = list(type_distribution.keys())
+            counts = list(type_distribution.values())
+
+            plt.figure(figsize=(8, 6))
+            bars = plt.bar(types, counts, color='#87CEEB')
+            plt.xlabel('Commit-Typen')
+            plt.ylabel('Häufigkeit')
+            plt.title(f'Commit-Typ-Verteilung für {repo_name} ({language})')
+            plt.xticks(rotation=45, ha='right')
+
+            # Werte über die Balken schreiben
+            for bar, count in zip(bars, counts):
+                yval = bar.get_height()
+                plt.text(bar.get_x() + bar.get_width()/2.0, yval + 0.1, int(count), ha='center', va='bottom')
+
+            plt.tight_layout()
+            # Plot speichern
+            safe_repo_name = repo_name.replace(" ", "_").replace("/", "_")
+            safe_language_name = language.replace(" ", "_").replace("/", "_")
+            output_file = output_dir / f"commit_types_{safe_language_name}_{safe_repo_name}.png"
+            plt.savefig(output_file)
+            plt.close()
+
+
 if __name__ == "__main__":
-    plot_classification_by_language('C:\\Users\\annaf\\PycharmProjects\\Bachelorarbeit\\src\\results\\repository_classifications.json', ROOT / 'results')
+    # Pfade zu deinen Daten
+    RESULTS_DIR = ROOT / "results" / "commit_messages" # Ersetze durch deinen tatsächlichen Pfad
+    classification_file = ROOT / "results" / "repository_classifications.json"
+    OUTPUT_DIR = ROOT / "results"  # Ersetze durch dein gewünschtes Ausgabeverzeichnis
+
+    # Klassifikationen laden
+    classifications = load_classifications(classification_file)
+
+    # Repositories filtern
+    filtered_repos = filter_repositories(classifications, target_classification='nutzen CC und als Vorgabe erkennbar')
+
+    # Repositories analysieren
+    analysis_by_language = analyze_repositories_by_language(filtered_repos, RESULTS_DIR)
+
+    # CC-Konsistenz plotten
+    cc_consistency_output_dir = OUTPUT_DIR / "cc_consistency"
+    plot_cc_consistency_per_language(analysis_by_language, cc_consistency_output_dir)
+
+    # Commit-Typ-Verteilung plotten
+    commit_type_output_dir = OUTPUT_DIR / "commit_type_distribution"
+    plot_commit_type_distribution_per_language(analysis_by_language, commit_type_output_dir)

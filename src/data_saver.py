@@ -67,3 +67,19 @@ def load_dataset(yaml_path):
             extracted_data = json.load(file)
 
     return extracted_data
+
+
+def load_classifications(classification_file):
+    """
+    Lädt die Repository-Klassifikationen nach Sprache.
+
+    Args:
+        classification_file (Path): Pfad zur JSON-Datei mit den Klassifikationen.
+
+    Returns:
+        dict: Dictionary mit Sprache als Schlüssel und Repository-Klassifikationen als Wert.
+    """
+    with open(classification_file, 'r', encoding='utf-8') as f:
+        classifications = json.load(f)
+    return classifications
+
