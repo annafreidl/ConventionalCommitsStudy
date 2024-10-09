@@ -27,7 +27,7 @@ def classify_repository(analysis_summary, using_cc):
     elif using_cc and adoption_date_exists:
         return "nutzen CC und als Vorgabe erkennbar"
     elif using_cc and not adoption_date_exists:
-        return "Vorgabe/Erwähnung von CC, aber wird nicht genutzt"
+        return "Erwaehnung von CC, aber wird nicht genutzt"
     else:
         return "nicht eindeutig klassifizierbar"
 
@@ -218,7 +218,7 @@ def find_80_percent_conventional_date(commits, min_cc_percentage=0.8, min_cc_com
     # Kumulative Summe der konventionellen Commits berechnen
     cum_conventional_commits = [0] * (total_commits + 1)
     for i in range(1, total_commits + 1):
-        is_conv = 1 if commits_reversed[i - 1].get("is_conventional") else 0
+        is_conv = 1 if commits_reversed[i - 1].get("cc_type") else 0
         cum_conventional_commits[i] = cum_conventional_commits[i - 1] + is_conv
 
     # Minimale Anzahl verbleibender Commits berechnen

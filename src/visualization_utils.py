@@ -1,6 +1,9 @@
 import json
+from collections import defaultdict
 from pathlib import Path
 import matplotlib.pyplot as plt
+
+from constants import ROOT
 
 
 def visualize_repo_commits(enriched_commits, summary, repo_name):
@@ -167,5 +170,55 @@ def plot_cc_adoption_dates(results_dir):
 
 
 # Aufruf der Funktion im Hauptteil
+# if __name__ == "__main__":
+#     visualize_type_distribution('C:\\Users\\annaf\\PycharmProjects\\Bachelorarbeit\\src\\results\\custom_types.json')
+
+def plot_classification_by_language(classification_file, output_dir):
+    """
+    Liest den Klassifikationsindex ein, sammelt die Daten und erstellt für jede Programmiersprache ein Diagramm der Repository-Klassifikationen.
+
+    Args:
+        classification_file (Path): Pfad zur JSON-Datei mit den Klassifikationen.
+        output_dir (Path): Verzeichnis, in dem die Diagramme gespeichert werden sollen.
+    """
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    # Lade die Klassifikationen
+    with open(classification_file, 'r', encoding='utf-8') as f:
+        classifications = json.load(f)
+
+    for language, repos in classifications.items():
+        # Zähle die Anzahl der Repositories pro Klassifikation für die aktuelle Sprache
+        classification_counts = defaultdict(int)
+        for classification in repos.values():
+            classification_counts[classification] += 1
+
+        # Sortiere die Klassifikationen nach Anzahl absteigend
+        classifications_sorted = dict(sorted(classification_counts.items(), key=lambda item: item[1], reverse=True))
+
+        classifications_list = list(classifications_sorted.keys())
+        counts = list(classifications_sorted.values())
+
+        plt.figure(figsize=(8, 6))
+        bars = plt.bar(classifications_list, counts, color='#87CEEB')
+        plt.xlabel('Klassifikation')
+        plt.ylabel('Anzahl der Repositories')
+        plt.title(f'Repository-Klassifikationen für {language}')
+        plt.xticks(rotation=45, ha='right')
+
+        # Werte über die Balken schreiben
+        for bar, count in zip(bars, counts):
+            yval = bar.get_height()
+            plt.text(bar.get_x() + bar.get_width()/2.0, yval + 0.1, int(count), ha='center', va='bottom')
+
+        plt.tight_layout()
+
+        # Diagramm speichern
+        safe_language_name = language.replace(" ", "_").replace("/", "_")
+        output_file = output_dir / f"classification_{safe_language_name}.png"
+        plt.savefig(output_file)
+        plt.close()
+
+
 if __name__ == "__main__":
-    visualize_type_distribution('C:\\Users\\annaf\\PycharmProjects\\Bachelorarbeit\\src\\results\\custom_types.json')
+    plot_classification_by_language('C:\\Users\\annaf\\PycharmProjects\\Bachelorarbeit\\src\\results\\repository_classifications.json', ROOT / 'results')

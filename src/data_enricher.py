@@ -1,5 +1,5 @@
 # data_enricher.py
-
+import re
 from collections import Counter
 from data_enricher import *
 from analyzer import find_80_percent_conventional_date
@@ -25,6 +25,55 @@ def identify_consistent_custom_types(custom_type_counter, total_commits, min_abs
             consistent_custom_types.add(custom_type)
     return consistent_custom_types
 
+def parse_commit_message(message):
+    """
+    Parst eine Commit-Nachricht und gibt den Typ, Scope, Breaking-Change-Indikator und Beschreibung zurück.
+    """
+    pattern = r"^([a-zA-Z]+)(?:\(([\w\-\.\s]+)\))?(!)?: (.+)"
+    match = re.match(pattern, message.lower())
+    if match:
+        commit_type = match.group(1)
+        scope = match.group(2)
+        if scope:
+            scope = scope.strip()
+        breaking = match.group(3) == '!'
+        description = match.group(4)
+        return {'type': commit_type, 'scope': scope, 'breaking': breaking, 'description': description}
+    return None
+
+
+def is_conventional_commit(commit_message):
+    """
+    Prüft, ob eine Commit-Nachricht der CC-Convention entspricht.
+    """
+    cc_types = ["feat", "fix", "docs", "style", "refactor", "perf",
+                "test", "build", "ci", "chore", "revert"]
+    parsed = parse_commit_message(commit_message)
+    if parsed and parsed['type'] in cc_types:
+        return True
+    return False
+
+
+def is_conventional_custom(commit_message):
+    """
+    Prüft, ob eine Commit-Nachricht der CC-Convention mit custom Typen entspricht.
+    """
+    cc_types = ["feat", "fix", "docs", "style", "refactor", "perf",
+                "test", "build", "ci", "chore", "revert"]
+    parsed = parse_commit_message(commit_message)
+    if parsed and parsed['type'] not in cc_types:
+        return True
+    return False
+
+
+def get_commit_type(message):
+    """
+    Extrahiert den Commit-Typ aus einer Commit-Nachricht.
+    """
+    parsed = parse_commit_message(message)
+    if parsed:
+        return parsed['type']
+    return None
 
 def enrich_commits(commits):
     """
@@ -129,52 +178,4 @@ def enrich_commits(commits):
     return enriched_commits, summary
 
 
-def parse_commit_message(message):
-    """
-    Parst eine Commit-Nachricht und gibt den Typ, Scope, Breaking-Change-Indikator und Beschreibung zurück.
-    """
-    pattern = r"^([a-zA-Z]+)(?:\(([\w\-\.\s]+)\))?(!)?: (.+)"
-    match = re.match(pattern, message.lower())
-    if match:
-        commit_type = match.group(1)
-        scope = match.group(2)
-        if scope:
-            scope = scope.strip()
-        breaking = match.group(3) == '!'
-        description = match.group(4)
-        return {'type': commit_type, 'scope': scope, 'breaking': breaking, 'description': description}
-    return None
 
-
-def is_conventional_commit(commit_message):
-    """
-    Prüft, ob eine Commit-Nachricht der CC-Convention entspricht.
-    """
-    cc_types = ["feat", "fix", "docs", "style", "refactor", "perf",
-                "test", "build", "ci", "chore", "revert"]
-    parsed = parse_commit_message(commit_message)
-    if parsed and parsed['type'] in cc_types:
-        return True
-    return False
-
-
-def is_conventional_custom(commit_message):
-    """
-    Prüft, ob eine Commit-Nachricht der CC-Convention mit custom Typen entspricht.
-    """
-    cc_types = ["feat", "fix", "docs", "style", "refactor", "perf",
-                "test", "build", "ci", "chore", "revert"]
-    parsed = parse_commit_message(commit_message)
-    if parsed and parsed['type'] not in cc_types:
-        return True
-    return False
-
-
-def get_commit_type(message):
-    """
-    Extrahiert den Commit-Typ aus einer Commit-Nachricht.
-    """
-    parsed = parse_commit_message(message)
-    if parsed:
-        return parsed['type']
-    return None
