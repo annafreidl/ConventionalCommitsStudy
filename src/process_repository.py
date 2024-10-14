@@ -7,6 +7,7 @@ from data_enricher import enrich_commits
 from data_saver import save_to_json, load_from_json
 from analyzer import classify_repository
 from analyzer import search_for_cc_indications
+from testing import analyse_commit_chunks
 
 
 def record_classification(repo_name, language, classification):
@@ -36,7 +37,6 @@ def record_classification(repo_name, language, classification):
         json.dump(classifications, f, indent=2)
 
 
-
 def process_repository(repo_data, RESULTS_DIR):
     repo_name = repo_data["name"].replace("/", "_")
     language = repo_data.get('language', 'Unknown')
@@ -64,12 +64,14 @@ def process_repository(repo_data, RESULTS_DIR):
     else:
         print(f"Keine CC-Einführung in {repo_name} festgestellt.")
 
+    analyse_commit_chunks(data)
     using_cc = search_for_cc_indications(repo)
     print(f"Repository {repo_name} verwendet Conventional Commits: {using_cc}")
 
     classification = classify_repository(analysis_summary, using_cc)
     print(f"Das Repository {repo_name} wird klassifiziert als: {classification}")
 
+
+
     # Klassifikation aufzeichnen
     record_classification(repo_name, language, classification)
-

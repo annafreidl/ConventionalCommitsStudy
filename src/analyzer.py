@@ -7,6 +7,9 @@ import re
 from collections import defaultdict, Counter
 from datetime import datetime
 
+from constants import MIN_CC_PERCENTAGE, MIN_CC_COMMITS
+
+
 def classify_repository(analysis_summary, using_cc):
     """
     Klassifiziert das Repository basierend auf der Analyse und der CC-Nutzung.
@@ -30,6 +33,7 @@ def classify_repository(analysis_summary, using_cc):
         return "Erwaehnung von CC, aber wird nicht genutzt"
     else:
         return "nicht eindeutig klassifizierbar"
+
 
 def search_for_cc_indications(repo_instance):
     """
@@ -206,9 +210,7 @@ def check_documentation_for_cc(local_path):
     return False
 
 
-
-def find_80_percent_conventional_date(commits, min_cc_percentage=0.8, min_cc_commits=10):
-
+def find_cc_adoption_date(commits, min_cc_percentage=MIN_CC_PERCENTAGE, min_cc_commits=MIN_CC_COMMITS):
     total_commits = len(commits)
     if total_commits == 0:
         return None  # Keine Commits verfügbar
@@ -308,13 +310,16 @@ def filter_repositories(classifications, target_classification='nutzen CC und al
     filtered_repos = {}
 
     for language, repos in classifications.items():
-        matching_repos = [repo_name for repo_name, classification in repos.items() if classification == target_classification]
+        matching_repos = [repo_name for repo_name, classification in repos.items() if
+                          classification == target_classification]
         if matching_repos:
             filtered_repos[language] = matching_repos
 
     return filtered_repos
 
+
 import datetime
+
 
 def analyze_repository_from_existing_data(repo_name, results_dir):
     """
@@ -436,4 +441,3 @@ def analyze_repositories_by_language(filtered_repos, results_dir):
             }
 
     return analysis_by_language
-

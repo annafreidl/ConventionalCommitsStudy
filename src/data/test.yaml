@@ -240,225 +240,116 @@
     limitations: null
     body: null
     featured: null
-- id: 83222441
-  node_id: MDEwOlJlcG9zaXRvcnk4MzIyMjQ0MQ==
-  name: system-design-primer
-  full_name: donnemartin/system-design-primer
+- id: 240315046
+  node_id: MDEwOlJlcG9zaXRvcnkyNDAzMTUwNDY=
+  name: jina
+  full_name: jina-ai/jina
   owner:
-    login: donnemartin
-    id: 5458997
-    node_id: MDQ6VXNlcjU0NTg5OTc=
-    avatar_url: https://avatars.githubusercontent.com/u/5458997?v=4
+    login: jina-ai
+    id: 60539444
+    node_id: MDEyOk9yZ2FuaXphdGlvbjYwNTM5NDQ0
+    avatar_url: https://avatars.githubusercontent.com/u/60539444?v=4
     gravatar_id: ''
-    url: https://api.github.com/users/donnemartin
-    html_url: https://github.com/donnemartin
-    followers_url: https://api.github.com/users/donnemartin/followers
-    following_url: https://api.github.com/users/donnemartin/following%7B/other_user%7D
-    gists_url: https://api.github.com/users/donnemartin/gists%7B/gist_id%7D
-    starred_url: https://api.github.com/users/donnemartin/starred%7B/owner%7D%7B/repo%7D
-    subscriptions_url: https://api.github.com/users/donnemartin/subscriptions
-    organizations_url: https://api.github.com/users/donnemartin/orgs
-    repos_url: https://api.github.com/users/donnemartin/repos
-    events_url: https://api.github.com/users/donnemartin/events%7B/privacy%7D
-    received_events_url: https://api.github.com/users/donnemartin/received_events
-    type: User
+    url: https://api.github.com/users/jina-ai
+    html_url: https://github.com/jina-ai
+    followers_url: https://api.github.com/users/jina-ai/followers
+    following_url: https://api.github.com/users/jina-ai/following%7B/other_user%7D
+    gists_url: https://api.github.com/users/jina-ai/gists%7B/gist_id%7D
+    starred_url: https://api.github.com/users/jina-ai/starred%7B/owner%7D%7B/repo%7D
+    subscriptions_url: https://api.github.com/users/jina-ai/subscriptions
+    organizations_url: https://api.github.com/users/jina-ai/orgs
+    repos_url: https://api.github.com/users/jina-ai/repos
+    events_url: https://api.github.com/users/jina-ai/events%7B/privacy%7D
+    received_events_url: https://api.github.com/users/jina-ai/received_events
+    type: Organization
     site_admin: false
     patch_url: null
   private: false
-  html_url: https://github.com/donnemartin/system-design-primer
-  description: Learn how to design large-scale systems. Prep for the system design interview.  Includes Anki flashcards.
+  html_url: https://github.com/jina-ai/jina
+  description: ☁️ Build multimodal AI applications with cloud-native stack
   fork: false
-  url: https://api.github.com/repos/donnemartin/system-design-primer
-  archive_url: https://api.github.com/repos/donnemartin/system-design-primer/%7Barchive_format%7D%7B/ref%7D
-  assignees_url: https://api.github.com/repos/donnemartin/system-design-primer/assignees%7B/user%7D
-  blobs_url: https://api.github.com/repos/donnemartin/system-design-primer/git/blobs%7B/sha%7D
-  branches_url: https://api.github.com/repos/donnemartin/system-design-primer/branches%7B/branch%7D
-  collaborators_url: https://api.github.com/repos/donnemartin/system-design-primer/collaborators%7B/collaborator%7D
-  comments_url: https://api.github.com/repos/donnemartin/system-design-primer/comments%7B/number%7D
-  commits_url: https://api.github.com/repos/donnemartin/system-design-primer/commits%7B/sha%7D
-  compare_url: https://api.github.com/repos/donnemartin/system-design-primer/compare/%7Bbase%7D...%7Bhead%7D
-  contents_url: https://api.github.com/repos/donnemartin/system-design-primer/contents/%7B+path%7D
-  contributors_url: https://api.github.com/repos/donnemartin/system-design-primer/contributors
-  deployments_url: https://api.github.com/repos/donnemartin/system-design-primer/deployments
-  downloads_url: https://api.github.com/repos/donnemartin/system-design-primer/downloads
-  events_url: https://api.github.com/repos/donnemartin/system-design-primer/events
-  forks_url: https://api.github.com/repos/donnemartin/system-design-primer/forks
-  git_commits_url: https://api.github.com/repos/donnemartin/system-design-primer/git/commits%7B/sha%7D
-  git_refs_url: https://api.github.com/repos/donnemartin/system-design-primer/git/refs%7B/sha%7D
-  git_tags_url: https://api.github.com/repos/donnemartin/system-design-primer/git/tags%7B/sha%7D
-  git_url: git://github.com/donnemartin/system-design-primer.git
-  issue_comment_url: https://api.github.com/repos/donnemartin/system-design-primer/issues/comments%7B/number%7D
-  issue_events_url: https://api.github.com/repos/donnemartin/system-design-primer/issues/events%7B/number%7D
-  issues_url: https://api.github.com/repos/donnemartin/system-design-primer/issues%7B/number%7D
-  keys_url: https://api.github.com/repos/donnemartin/system-design-primer/keys%7B/key_id%7D
-  labels_url: https://api.github.com/repos/donnemartin/system-design-primer/labels%7B/name%7D
-  languages_url: https://api.github.com/repos/donnemartin/system-design-primer/languages
-  merges_url: https://api.github.com/repos/donnemartin/system-design-primer/merges
-  milestones_url: https://api.github.com/repos/donnemartin/system-design-primer/milestones%7B/number%7D
-  notifications_url: https://api.github.com/repos/donnemartin/system-design-primer/notifications%7B?since,all,participating}
-  pulls_url: https://api.github.com/repos/donnemartin/system-design-primer/pulls%7B/number%7D
-  releases_url: https://api.github.com/repos/donnemartin/system-design-primer/releases%7B/id%7D
-  ssh_url: git@github.com:donnemartin/system-design-primer.git
-  stargazers_url: https://api.github.com/repos/donnemartin/system-design-primer/stargazers
-  statuses_url: https://api.github.com/repos/donnemartin/system-design-primer/statuses/%7Bsha%7D
-  subscribers_url: https://api.github.com/repos/donnemartin/system-design-primer/subscribers
-  subscription_url: https://api.github.com/repos/donnemartin/system-design-primer/subscription
-  tags_url: https://api.github.com/repos/donnemartin/system-design-primer/tags
-  teams_url: https://api.github.com/repos/donnemartin/system-design-primer/teams
-  trees_url: https://api.github.com/repos/donnemartin/system-design-primer/git/trees%7B/sha%7D
-  clone_url: https://github.com/donnemartin/system-design-primer.git
-  hooks_url: https://api.github.com/repos/donnemartin/system-design-primer/hooks
-  svn_url: https://github.com/donnemartin/system-design-primer
-  homepage: ''
+  url: https://api.github.com/repos/jina-ai/jina
+  archive_url: https://api.github.com/repos/jina-ai/jina/%7Barchive_format%7D%7B/ref%7D
+  assignees_url: https://api.github.com/repos/jina-ai/jina/assignees%7B/user%7D
+  blobs_url: https://api.github.com/repos/jina-ai/jina/git/blobs%7B/sha%7D
+  branches_url: https://api.github.com/repos/jina-ai/jina/branches%7B/branch%7D
+  collaborators_url: https://api.github.com/repos/jina-ai/jina/collaborators%7B/collaborator%7D
+  comments_url: https://api.github.com/repos/jina-ai/jina/comments%7B/number%7D
+  commits_url: https://api.github.com/repos/jina-ai/jina/commits%7B/sha%7D
+  compare_url: https://api.github.com/repos/jina-ai/jina/compare/%7Bbase%7D...%7Bhead%7D
+  contents_url: https://api.github.com/repos/jina-ai/jina/contents/%7B+path%7D
+  contributors_url: https://api.github.com/repos/jina-ai/jina/contributors
+  deployments_url: https://api.github.com/repos/jina-ai/jina/deployments
+  downloads_url: https://api.github.com/repos/jina-ai/jina/downloads
+  events_url: https://api.github.com/repos/jina-ai/jina/events
+  forks_url: https://api.github.com/repos/jina-ai/jina/forks
+  git_commits_url: https://api.github.com/repos/jina-ai/jina/git/commits%7B/sha%7D
+  git_refs_url: https://api.github.com/repos/jina-ai/jina/git/refs%7B/sha%7D
+  git_tags_url: https://api.github.com/repos/jina-ai/jina/git/tags%7B/sha%7D
+  git_url: git://github.com/jina-ai/jina.git
+  issue_comment_url: https://api.github.com/repos/jina-ai/jina/issues/comments%7B/number%7D
+  issue_events_url: https://api.github.com/repos/jina-ai/jina/issues/events%7B/number%7D
+  issues_url: https://api.github.com/repos/jina-ai/jina/issues%7B/number%7D
+  keys_url: https://api.github.com/repos/jina-ai/jina/keys%7B/key_id%7D
+  labels_url: https://api.github.com/repos/jina-ai/jina/labels%7B/name%7D
+  languages_url: https://api.github.com/repos/jina-ai/jina/languages
+  merges_url: https://api.github.com/repos/jina-ai/jina/merges
+  milestones_url: https://api.github.com/repos/jina-ai/jina/milestones%7B/number%7D
+  notifications_url: https://api.github.com/repos/jina-ai/jina/notifications%7B?since,all,participating}
+  pulls_url: https://api.github.com/repos/jina-ai/jina/pulls%7B/number%7D
+  releases_url: https://api.github.com/repos/jina-ai/jina/releases%7B/id%7D
+  ssh_url: git@github.com:jina-ai/jina.git
+  stargazers_url: https://api.github.com/repos/jina-ai/jina/stargazers
+  statuses_url: https://api.github.com/repos/jina-ai/jina/statuses/%7Bsha%7D
+  subscribers_url: https://api.github.com/repos/jina-ai/jina/subscribers
+  subscription_url: https://api.github.com/repos/jina-ai/jina/subscription
+  tags_url: https://api.github.com/repos/jina-ai/jina/tags
+  teams_url: https://api.github.com/repos/jina-ai/jina/teams
+  trees_url: https://api.github.com/repos/jina-ai/jina/git/trees%7B/sha%7D
+  clone_url: https://github.com/jina-ai/jina.git
+  hooks_url: https://api.github.com/repos/jina-ai/jina/hooks
+  svn_url: https://github.com/jina-ai/jina
+  homepage: https://docs.jina.ai
   language: Python
-  forks_count: 44716
-  stargazers_count: 263703
-  watchers_count: 263703
-  size: 11307
+  forks_count: 2209
+  stargazers_count: 20561
+  watchers_count: 20561
+  size: 1421794
   default_branch: master
-  open_issues_count: 435
+  open_issues_count: 19
   is_template: false
   topics:
-  - design
-  - design-patterns
-  - design-system
-  - development
-  - interview
-  - interview-practice
-  - interview-questions
-  - programming
-  - python
-  - system
-  - web
-  - web-application
-  - webapp
+  - cloud-native
+  - cncf
+  - deep-learning
+  - docker
+  - fastapi
+  - framework
+  - generative-ai
+  - grpc
+  - jaeger
+  - kubernetes
+  - llmops
+  - machine-learning
+  - microservice
+  - mlops
+  - multimodal
+  - neural-search
+  - opentelemetry
+  - orchestration
+  - pipeline
+  - prometheus
   has_issues: true
   has_projects: true
-  has_wiki: true
-  has_pages: false
-  has_downloads: true
-  archived: false
-  disabled: false
-  visibility: public
-  pushed_at: 2024-06-29T00:09:30Z
-  created_at: 2017-02-26T16:15:28Z
-  updated_at: 2024-07-10T07:43:28Z
-  permissions:
-    admin: false
-    push: false
-    pull: true
-    triage: false
-    maintain: false
-  allow_forking: true
-  license:
-    key: other
-    name: Other
-    node_id: MDc6TGljZW5zZTA=
-    spdx_id: NOASSERTION
-    html_url: null
-    description: null
-    implementation: null
-    permissions: null
-    conditions: null
-    limitations: null
-    body: null
-    featured: null
-- id: 21289110
-  node_id: MDEwOlJlcG9zaXRvcnkyMTI4OTExMA==
-  name: awesome-python
-  full_name: vinta/awesome-python
-  owner:
-    login: vinta
-    id: 652070
-    node_id: MDQ6VXNlcjY1MjA3MA==
-    avatar_url: https://avatars.githubusercontent.com/u/652070?v=4
-    gravatar_id: ''
-    url: https://api.github.com/users/vinta
-    html_url: https://github.com/vinta
-    followers_url: https://api.github.com/users/vinta/followers
-    following_url: https://api.github.com/users/vinta/following%7B/other_user%7D
-    gists_url: https://api.github.com/users/vinta/gists%7B/gist_id%7D
-    starred_url: https://api.github.com/users/vinta/starred%7B/owner%7D%7B/repo%7D
-    subscriptions_url: https://api.github.com/users/vinta/subscriptions
-    organizations_url: https://api.github.com/users/vinta/orgs
-    repos_url: https://api.github.com/users/vinta/repos
-    events_url: https://api.github.com/users/vinta/events%7B/privacy%7D
-    received_events_url: https://api.github.com/users/vinta/received_events
-    type: User
-    site_admin: false
-    patch_url: null
-  private: false
-  html_url: https://github.com/vinta/awesome-python
-  description: An opinionated list of awesome Python frameworks, libraries, software and resources.
-  fork: false
-  url: https://api.github.com/repos/vinta/awesome-python
-  archive_url: https://api.github.com/repos/vinta/awesome-python/%7Barchive_format%7D%7B/ref%7D
-  assignees_url: https://api.github.com/repos/vinta/awesome-python/assignees%7B/user%7D
-  blobs_url: https://api.github.com/repos/vinta/awesome-python/git/blobs%7B/sha%7D
-  branches_url: https://api.github.com/repos/vinta/awesome-python/branches%7B/branch%7D
-  collaborators_url: https://api.github.com/repos/vinta/awesome-python/collaborators%7B/collaborator%7D
-  comments_url: https://api.github.com/repos/vinta/awesome-python/comments%7B/number%7D
-  commits_url: https://api.github.com/repos/vinta/awesome-python/commits%7B/sha%7D
-  compare_url: https://api.github.com/repos/vinta/awesome-python/compare/%7Bbase%7D...%7Bhead%7D
-  contents_url: https://api.github.com/repos/vinta/awesome-python/contents/%7B+path%7D
-  contributors_url: https://api.github.com/repos/vinta/awesome-python/contributors
-  deployments_url: https://api.github.com/repos/vinta/awesome-python/deployments
-  downloads_url: https://api.github.com/repos/vinta/awesome-python/downloads
-  events_url: https://api.github.com/repos/vinta/awesome-python/events
-  forks_url: https://api.github.com/repos/vinta/awesome-python/forks
-  git_commits_url: https://api.github.com/repos/vinta/awesome-python/git/commits%7B/sha%7D
-  git_refs_url: https://api.github.com/repos/vinta/awesome-python/git/refs%7B/sha%7D
-  git_tags_url: https://api.github.com/repos/vinta/awesome-python/git/tags%7B/sha%7D
-  git_url: git://github.com/vinta/awesome-python.git
-  issue_comment_url: https://api.github.com/repos/vinta/awesome-python/issues/comments%7B/number%7D
-  issue_events_url: https://api.github.com/repos/vinta/awesome-python/issues/events%7B/number%7D
-  issues_url: https://api.github.com/repos/vinta/awesome-python/issues%7B/number%7D
-  keys_url: https://api.github.com/repos/vinta/awesome-python/keys%7B/key_id%7D
-  labels_url: https://api.github.com/repos/vinta/awesome-python/labels%7B/name%7D
-  languages_url: https://api.github.com/repos/vinta/awesome-python/languages
-  merges_url: https://api.github.com/repos/vinta/awesome-python/merges
-  milestones_url: https://api.github.com/repos/vinta/awesome-python/milestones%7B/number%7D
-  notifications_url: https://api.github.com/repos/vinta/awesome-python/notifications%7B?since,all,participating}
-  pulls_url: https://api.github.com/repos/vinta/awesome-python/pulls%7B/number%7D
-  releases_url: https://api.github.com/repos/vinta/awesome-python/releases%7B/id%7D
-  ssh_url: git@github.com:vinta/awesome-python.git
-  stargazers_url: https://api.github.com/repos/vinta/awesome-python/stargazers
-  statuses_url: https://api.github.com/repos/vinta/awesome-python/statuses/%7Bsha%7D
-  subscribers_url: https://api.github.com/repos/vinta/awesome-python/subscribers
-  subscription_url: https://api.github.com/repos/vinta/awesome-python/subscription
-  tags_url: https://api.github.com/repos/vinta/awesome-python/tags
-  teams_url: https://api.github.com/repos/vinta/awesome-python/teams
-  trees_url: https://api.github.com/repos/vinta/awesome-python/git/trees%7B/sha%7D
-  clone_url: https://github.com/vinta/awesome-python.git
-  hooks_url: https://api.github.com/repos/vinta/awesome-python/hooks
-  svn_url: https://github.com/vinta/awesome-python
-  homepage: https://awesome-python.com/
-  language: Python
-  forks_count: 24634
-  stargazers_count: 212087
-  watchers_count: 212087
-  size: 6766
-  default_branch: master
-  open_issues_count: 416
-  is_template: false
-  topics:
-  - awesome
-  - collections
-  - python
-  - python-framework
-  - python-library
-  - python-resources
-  has_issues: false
-  has_projects: false
   has_wiki: false
   has_pages: true
   has_downloads: true
   archived: false
   disabled: false
   visibility: public
-  pushed_at: 2024-07-08T23:26:43Z
-  created_at: 2014-06-27T21:00:06Z
-  updated_at: 2024-07-10T07:42:12Z
+  pushed_at: 2024-07-09T12:01:53Z
+  created_at: 2020-02-13T17:04:44Z
+  updated_at: 2024-07-10T06:42:02Z
   permissions:
     admin: false
     push: false
@@ -467,135 +358,11 @@
     maintain: false
   allow_forking: true
   license:
-    key: other
-    name: Other
-    node_id: MDc6TGljZW5zZTA=
-    spdx_id: NOASSERTION
-    html_url: null
-    description: null
-    implementation: null
-    permissions: null
-    conditions: null
-    limitations: null
-    body: null
-    featured: null
-- id: 63476337
-  node_id: MDEwOlJlcG9zaXRvcnk2MzQ3NjMzNw==
-  name: Python
-  full_name: TheAlgorithms/Python
-  owner:
-    login: TheAlgorithms
-    id: 20487725
-    node_id: MDEyOk9yZ2FuaXphdGlvbjIwNDg3NzI1
-    avatar_url: https://avatars.githubusercontent.com/u/20487725?v=4
-    gravatar_id: ''
-    url: https://api.github.com/users/TheAlgorithms
-    html_url: https://github.com/TheAlgorithms
-    followers_url: https://api.github.com/users/TheAlgorithms/followers
-    following_url: https://api.github.com/users/TheAlgorithms/following%7B/other_user%7D
-    gists_url: https://api.github.com/users/TheAlgorithms/gists%7B/gist_id%7D
-    starred_url: https://api.github.com/users/TheAlgorithms/starred%7B/owner%7D%7B/repo%7D
-    subscriptions_url: https://api.github.com/users/TheAlgorithms/subscriptions
-    organizations_url: https://api.github.com/users/TheAlgorithms/orgs
-    repos_url: https://api.github.com/users/TheAlgorithms/repos
-    events_url: https://api.github.com/users/TheAlgorithms/events%7B/privacy%7D
-    received_events_url: https://api.github.com/users/TheAlgorithms/received_events
-    type: Organization
-    site_admin: false
-    patch_url: null
-  private: false
-  html_url: https://github.com/TheAlgorithms/Python
-  description: All Algorithms implemented in Python
-  fork: false
-  url: https://api.github.com/repos/TheAlgorithms/Python
-  archive_url: https://api.github.com/repos/TheAlgorithms/Python/%7Barchive_format%7D%7B/ref%7D
-  assignees_url: https://api.github.com/repos/TheAlgorithms/Python/assignees%7B/user%7D
-  blobs_url: https://api.github.com/repos/TheAlgorithms/Python/git/blobs%7B/sha%7D
-  branches_url: https://api.github.com/repos/TheAlgorithms/Python/branches%7B/branch%7D
-  collaborators_url: https://api.github.com/repos/TheAlgorithms/Python/collaborators%7B/collaborator%7D
-  comments_url: https://api.github.com/repos/TheAlgorithms/Python/comments%7B/number%7D
-  commits_url: https://api.github.com/repos/TheAlgorithms/Python/commits%7B/sha%7D
-  compare_url: https://api.github.com/repos/TheAlgorithms/Python/compare/%7Bbase%7D...%7Bhead%7D
-  contents_url: https://api.github.com/repos/TheAlgorithms/Python/contents/%7B+path%7D
-  contributors_url: https://api.github.com/repos/TheAlgorithms/Python/contributors
-  deployments_url: https://api.github.com/repos/TheAlgorithms/Python/deployments
-  downloads_url: https://api.github.com/repos/TheAlgorithms/Python/downloads
-  events_url: https://api.github.com/repos/TheAlgorithms/Python/events
-  forks_url: https://api.github.com/repos/TheAlgorithms/Python/forks
-  git_commits_url: https://api.github.com/repos/TheAlgorithms/Python/git/commits%7B/sha%7D
-  git_refs_url: https://api.github.com/repos/TheAlgorithms/Python/git/refs%7B/sha%7D
-  git_tags_url: https://api.github.com/repos/TheAlgorithms/Python/git/tags%7B/sha%7D
-  git_url: git://github.com/TheAlgorithms/Python.git
-  issue_comment_url: https://api.github.com/repos/TheAlgorithms/Python/issues/comments%7B/number%7D
-  issue_events_url: https://api.github.com/repos/TheAlgorithms/Python/issues/events%7B/number%7D
-  issues_url: https://api.github.com/repos/TheAlgorithms/Python/issues%7B/number%7D
-  keys_url: https://api.github.com/repos/TheAlgorithms/Python/keys%7B/key_id%7D
-  labels_url: https://api.github.com/repos/TheAlgorithms/Python/labels%7B/name%7D
-  languages_url: https://api.github.com/repos/TheAlgorithms/Python/languages
-  merges_url: https://api.github.com/repos/TheAlgorithms/Python/merges
-  milestones_url: https://api.github.com/repos/TheAlgorithms/Python/milestones%7B/number%7D
-  notifications_url: https://api.github.com/repos/TheAlgorithms/Python/notifications%7B?since,all,participating}
-  pulls_url: https://api.github.com/repos/TheAlgorithms/Python/pulls%7B/number%7D
-  releases_url: https://api.github.com/repos/TheAlgorithms/Python/releases%7B/id%7D
-  ssh_url: git@github.com:TheAlgorithms/Python.git
-  stargazers_url: https://api.github.com/repos/TheAlgorithms/Python/stargazers
-  statuses_url: https://api.github.com/repos/TheAlgorithms/Python/statuses/%7Bsha%7D
-  subscribers_url: https://api.github.com/repos/TheAlgorithms/Python/subscribers
-  subscription_url: https://api.github.com/repos/TheAlgorithms/Python/subscription
-  tags_url: https://api.github.com/repos/TheAlgorithms/Python/tags
-  teams_url: https://api.github.com/repos/TheAlgorithms/Python/teams
-  trees_url: https://api.github.com/repos/TheAlgorithms/Python/git/trees%7B/sha%7D
-  clone_url: https://github.com/TheAlgorithms/Python.git
-  hooks_url: https://api.github.com/repos/TheAlgorithms/Python/hooks
-  svn_url: https://github.com/TheAlgorithms/Python
-  homepage: https://the-algorithms.com/
-  language: Python
-  forks_count: 44001
-  stargazers_count: 182075
-  watchers_count: 182075
-  size: 15465
-  default_branch: master
-  open_issues_count: 226
-  is_template: false
-  topics:
-  - algorithm
-  - algorithm-competitions
-  - algorithms-implemented
-  - algos
-  - community-driven
-  - education
-  - hacktoberfest
-  - interview
-  - learn
-  - practice
-  - python
-  - searches
-  - sorting-algorithms
-  - sorts
-  has_issues: true
-  has_projects: true
-  has_wiki: true
-  has_pages: false
-  has_downloads: true
-  archived: false
-  disabled: false
-  visibility: public
-  pushed_at: 2024-07-10T06:48:07Z
-  created_at: 2016-07-16T09:44:01Z
-  updated_at: 2024-07-10T07:41:59Z
-  permissions:
-    admin: false
-    push: false
-    pull: true
-    triage: false
-    maintain: false
-  allow_forking: true
-  license:
-    key: mit
-    name: MIT License
-    node_id: MDc6TGljZW5zZTEz
-    spdx_id: MIT
-    url: https://api.github.com/licenses/mit
+    key: apache-2.0
+    name: Apache License 2.0
+    node_id: MDc6TGljZW5zZTI=
+    spdx_id: Apache-2.0
+    url: https://api.github.com/licenses/apache-2.0
     html_url: null
     description: null
     implementation: null

@@ -20,3 +20,9 @@ FILE = Path(__file__).resolve()
 ROOT = FILE.parents[0]
 RESULTS = ROOT / "results" / "commit_messages"
 YAML = ROOT / "data" / "dataset.yaml"
+
+SAMPLE_SIZE = 385
+MIN_CC_PERCENTAGE = 0.6
+MIN_CC_COMMITS = 10
+CHUNK_SIZE_PERCENT = 0.02
+NUM_CHUNKS = int(1 / CHUNK_SIZE_PERCENT)

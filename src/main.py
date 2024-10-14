@@ -6,7 +6,7 @@ from visualization_utils import plot_cc_adoption_dates
 FILE = Path(__file__).resolve()
 ROOT = FILE.parents[0]
 RESULTS = ROOT / "results" / "commit_messages"
-YAML = ROOT / "data" / "dataset.yaml"
+YAML = ROOT / "data" / "test.yaml"
 
 
 if __name__ == "__main__":

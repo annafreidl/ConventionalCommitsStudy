@@ -2,7 +2,7 @@
 import re
 from collections import Counter
 from data_enricher import *
-from analyzer import find_80_percent_conventional_date
+from analyzer import find_cc_adoption_date
 
 
 def identify_consistent_custom_types(custom_type_counter, total_commits, min_absolute=3, min_percentage=0.00):
@@ -166,7 +166,7 @@ def enrich_commits(commits):
     }
 
     if cc_type_commits > 200:
-        cc_adoption_date = find_80_percent_conventional_date(
+        cc_adoption_date = find_cc_adoption_date(
             enriched_commits,
             min_cc_percentage=0.6,
             min_cc_commits=10
