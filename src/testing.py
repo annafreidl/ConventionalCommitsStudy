@@ -1,90 +1,117 @@
+from datetime import datetime
 from pathlib import Path
 
 import matplotlib.pyplot as plt
+import numpy as np
+import ruptures as rpt
+import seaborn as sns
+from dateutil.relativedelta import relativedelta
+from matplotlib.lines import Line2D
 
 from constants import CHUNK_SIZE_PERCENT, NUM_CHUNKS, MIN_CC_PERCENTAGE
 from data_saver import load_from_json, load_dataset
 from repository_manager import clone_repository
 
 
-def chunk_data(commits, ganze_chunks, num_chunks=NUM_CHUNKS):
-    zahl_der_commits = len(commits)
-    rest_chunk = zahl_der_commits % ganze_chunks
+def chunk_data(commits, chunk_size):
+    """
+    Teilt die Commit-Liste in Chunks auf.
 
-    for i in range(0, num_chunks * ganze_chunks, ganze_chunks):
-        if zahl_der_commits - i < 2 * ganze_chunks:
-            yield commits[i:i + ganze_chunks + rest_chunk]
-            break
-        else:
-            yield commits[i:i + ganze_chunks]
+    Args:
+        commits (list): Liste der Commits.
+        chunk_size (int): Größe jedes Chunks.
+
+    Yields:
+        list: Ein Chunk von Commits.
+    """
+    total_commits = len(commits)
+    for i in range(0, total_commits, chunk_size):
+        yield commits[i:i + chunk_size]
 
 
-def analyse_commit_chunks(data, chunk_size=CHUNK_SIZE_PERCENT):
-    # Extraktion aus data (Commit-Daten)
-    commits = data.get("commits", {})
-    analysis_summary = data.get("analysis_summary", {})
+def analyse_commit_chunks(commit_data, repository_name):
+    """
+    Analysiert die Commits eines Repositories und bestimmt, ob eine konsequente CC-Nutzung vorliegt.
 
-    # Extraktion aus analysis_summary (Analyse-Daten)
-    cc_type_commits = analysis_summary.get("cc_type_commits", {})
+    Args:
+        commit_data (dict): Daten des Repositories mit Commits und Analyseergebnissen.
+        repository_name (str): Name des Repositories.
+
+    Returns:
+        bool: True, wenn eine konsequente CC-Nutzung erkannt wurde, sonst False.
+    """
+    print(repository_name)
+    commits = commit_data.get("commits", [])
+    analysis_summary = commit_data.get("analysis_summary", {})
+
+    cc_type_commits = analysis_summary.get("cc_type_commits", 0)
     total_commits = analysis_summary.get("total_commits", 0)
 
-    # Berechnung der Mindestgrenze
-    mindestgrenze_rel = cc_type_commits / total_commits
-    mindesgrenze_rel_erfüllt = mindestgrenze_rel >= 0.05
-    print(f"Mindestgrenze (relativ): {mindestgrenze_rel}")
-    print(f"Mindestgrenze (relativ): {mindesgrenze_rel_erfüllt}")
+    if total_commits == 0:
+        print("Keine Commits für die Analyse verfügbar.")
+        return False
 
-    mindestgrenze_abs = cc_type_commits > 200
-    print(f"Mindestgrenze (absolut): {mindestgrenze_abs}")
-    print(f"Anzahl CCCommits: {cc_type_commits}")
+    # Berechnung der Mindestgrenzen
+    min_threshold_rel = cc_type_commits / total_commits
+    min_threshold_abs = cc_type_commits > 200
 
-    if mindestgrenze_rel > 0.05 and mindestgrenze_abs:
-        print("Beide Mindestgrenzen sind erfüllt")
+    print(f"Mindestgrenze (relativ): {min_threshold_rel}")
+    print(f"Mindestgrenze erfüllt (relativ): {min_threshold_rel >= 0.05}")
+    print(f"Mindestgrenze erfüllt (absolut): {min_threshold_abs}")
+    print(f"Anzahl CC-Commits: {cc_type_commits}")
 
-        # Berechnung der Chunkgrößen
-        # Standard - Chunkgröße
-        ganze_chunks = total_commits // (1 / chunk_size)
-        rest_chunk = total_commits % ganze_chunks
-        print(f"Größe ganzer Chunks: {ganze_chunks}")
-        print(f"Größe Rest-Chunk: {rest_chunk}")
+    if min_threshold_rel >= 0.05 and min_threshold_abs:
+        print("Beide Mindestgrenzen sind erfüllt.")
 
-        list_chunk_cc_rates = []
+        # Berechnung der Chunk-Größe
+        chunk_size = total_commits // NUM_CHUNKS
+        print(f"Chunk-Größe: {chunk_size}")
 
-        for chunk in chunk_data(commits, int(ganze_chunks), num_chunks=NUM_CHUNKS):
+        chunk_cc_rates = []
 
-            anzahl_cc_commits = 0
-            for i in range(len(chunk)):
-                if chunk[i].get("cc_type") is not None:
-                    anzahl_cc_commits += 1
+        for chunk in chunk_data(commits, chunk_size):
+            cc_commit_count = sum(1 for commit in chunk if commit.get("cc_type") is not None)
+            chunk_cc_rate = cc_commit_count / len(chunk)
+            chunk_cc_rates.append(round(chunk_cc_rate, 2))
 
-            chunk_cc_rate = anzahl_cc_commits / len(chunk)
-            gerundete_chunk_cc_rate = round(chunk_cc_rate, 2)
-            list_chunk_cc_rates.append(gerundete_chunk_cc_rate)
+        reversed_chunk_rates = chunk_cc_rates[::-1]
+        cc_adoption_chunk_index = find_cc_chunk_adoption_date(reversed_chunk_rates)
 
-        list_reversed = list_chunk_cc_rates[::-1]
-        cc_chunks = find_cc_chunk_adoption_date(list_reversed)
-        if cc_chunks != -1:
-            print(f"Konsequente CC Nutzung ab {cc_chunks}")
-            if analysis_summary.get("cc_adoption_date") is not None:
-                print(f"Unverändertes Ergebnis")
-            else: print(f"BREAKING CHANGE: CC-Nutzung erkannt")
+        if cc_adoption_chunk_index != -1:
+            adoption_commit_index = ((NUM_CHUNKS - cc_adoption_chunk_index) * chunk_size) - 1
+            adoption_date = commits[adoption_commit_index].get("committed_datetime")
+            previous_adoption_date = analysis_summary.get('cc_adoption_date')
+
+            print(f"Erstes CC-Commit Datum: {adoption_date}")
+            print(f"Vorheriges Adoption-Datum: {previous_adoption_date}")
+
+            if previous_adoption_date:
+                date_old = datetime.fromisoformat(previous_adoption_date)
+                date_new = datetime.fromisoformat(adoption_date)
+                diff = relativedelta(date_new, date_old)
+                months_diff = diff.years * 12 + diff.months
+                print(f"Unterschied in Monaten: {months_diff}")
+
+            print(f"Konsequente CC-Nutzung ab Chunk {cc_adoption_chunk_index}")
+            visualize_commit_chunks(reversed_chunk_rates, chunk_size)
+            if previous_adoption_date:
+                print("Unverändertes Ergebnis")
+            else:
+                print("Neue CC-Nutzung erkannt")
             return True
         else:
-            if analysis_summary.get("cc_adoption_date") is not None:
-                print(f"BREAKING CHANGE: CC-Nutzung nicht mehr erkannt")
-                print(f"adoption_date: {analysis_summary.get('cc_adoption_date')}")
-            else: print(f"Unverändertes Ergebnis")
-            print("Keine konsequente CC Nutzung")
+            if analysis_summary.get("cc_adoption_date"):
+                print("CC-Nutzung nicht mehr erkannt")
+            else:
+                print("Unverändertes Ergebnis")
+            print("Keine konsequente CC-Nutzung")
             return False
-        # visualize_commit_chunks(list_reversed)
-
     else:
-        print("Zu wenige Commits für eine Analyse")
+        print("Zu wenige Commits für eine Analyse.")
         return False
 
 
-def visualize_commit_chunks(chunkliste):
-    plt.title = ("Commit Chunks")
+def visualize_commit_chunks(chunkliste, ganze_chunks):
     percent = [wert * 100 for wert in chunkliste]
 
     # Erstelle die x-Achsen-Beschriftungen (1, 2, 3, ...)
@@ -98,6 +125,7 @@ def visualize_commit_chunks(chunkliste):
     plt.ylim(0, 100)
 
     # Beschrifte die Achsen
+    plt.title(f'Chunksize = {ganze_chunks}')
     plt.xlabel('Datenpunkt')
     plt.ylabel('Prozent (%)')
 
@@ -119,57 +147,68 @@ def count_chunks(chunklist):
     return sum(1 for x in chunklist if x >= MIN_CC_PERCENTAGE)
 
 
-def find_cc_chunk_adoption_date(pieplist):
-    last_cc_index = -1
+def find_cc_chunk_adoption_date(chunk_rates):
+    """
+    Findet den Index des Chunks, ab dem die CC-Nutzung konsequent ist.
 
-    # Anzahl der CC-Chunks in der Liste
-    anzahl_cc_chunks = count_chunks(pieplist)
-    print(f"Anzahl existierender CC-Chunks: {anzahl_cc_chunks}")
+    Args:
+        chunk_rates (list): Liste der CC-Raten pro Chunk (umgekehrt sortiert).
 
-    # Wenn keine CC-Chunks, dann gibt es keinen Adoption-Zeitpunkt
-    if anzahl_cc_chunks == 0:
-        return last_cc_index
+    Returns:
+        int: Index des Chunks ab dem die CC-Nutzung konsequent ist, sonst -1.
+    """
+    for idx, rate in enumerate(chunk_rates):
+        if rate >= MIN_CC_PERCENTAGE:
+            return len(chunk_rates) - idx - 1  # Umrechnung auf Originalindex
+    print("Keine konsequente CC-Nutzung gefunden.")
+    return -1
 
-    # Durchlaufe die Liste von hinten nach vorne
-    reversed_list = pieplist[::-1]
 
-    for i in range(len(reversed_list)):
+def calculate_cusum(data):
+    target_mean = np.mean(data)
+    deviations = data - target_mean
+    cusum_values = np.cumsum(deviations)
+    return cusum_values
 
-        # wenn Element >= 0.8, dann suche weiter
-        if reversed_list[i] >= MIN_CC_PERCENTAGE:
-            last_cc_index = i
 
-        # wenn Element < 0.8, dann beende Suche nach dem letzten Chunk
-        else:
+def plot_cusum(values):
+    """
+    Visualisiert die CUSUM-Kurve der CC-Nutzung.
 
-            if last_cc_index < anzahl_cc_chunks - 1:
+    Args:
+        values (numpy.array): Array der CUSUM-Werte.
+    """
+    plt.figure(figsize=(12, 6))
+    plt.plot(values, marker='o')
+    plt.title('CUSUM-Kurve der CC-Nutzung')
+    plt.xlabel('Commit-Index')
+    plt.ylabel('Kumulative Abweichung')
+    plt.grid(True)
+    plt.show()
 
-                first_cc_index = 0
-                for x in range(len(pieplist)):
-                    if pieplist[x] < MIN_CC_PERCENTAGE:
-                        first_cc_index = x + 1
-                    else:
-                        print(f"Erster 80% CC-Chunk ist bei: {first_cc_index}")
-                        break
 
-            if last_cc_index == -1:
+def plot_heatmap(sequence):
+    # 1. Daten vorbereiten
+    heatmap_data = np.array(sequence).reshape(-1, 1)
 
-                print(f"Kein CC Repo")
+    plt.figure(figsize=(12, 6))
+    sns.heatmap(heatmap_data.T, cmap='YlGnBu', cbar=False)
+    plt.title('Heatmap der CC-Nutzung über Commits')
 
-                if anzahl_cc_chunks > 1:
-                    cc_endet = 0
-                    for u in range(len(reversed_list)):
-                        if reversed_list[u] > MIN_CC_PERCENTAGE:
-                            cc_endet = u
-                            print(
-                                f"Letzter 80% Chunk, falls nicht konsequent bis heute: {len(pieplist) - cc_endet - 1}")
-                            break
+    plt.axvline(x=change_point_index, color='red', linestyle='--', label='Change Point')
 
-                return last_cc_index
-            else:
-                return len(pieplist) - last_cc_index - 1
+    # 5. Beschriftung des Change Points mit Hintergrund
+    plt.annotate(f'Change Point\n{adoption_date}',
+                 xy=(change_point_index, 0),
+                 xytext=(change_point_index + len(sequence) * 0.05, 0.2),
+                 arrowprops=dict(facecolor='red', shrink=0.05),
+                 fontsize=10, color='black',
+                 bbox=dict(boxstyle='round,pad=0.5', fc='yellow', ec='black', lw=1))
 
-    return len(pieplist) - last_cc_index
+    plt.xlabel('Commit-Index')
+    plt.ylabel('CC-Nutzung')
+    plt.yticks([])
+    plt.show()
 
 
 if __name__ == "__main__":
@@ -191,15 +230,46 @@ if __name__ == "__main__":
         json_file_path = RESULTS / f"{repo_name}_commit_messages.json"
 
         repo = clone_repository(repo_data)
-        print("Klonen abgeschlosen")
+        print("Klonen abgeschlossen")
 
         data = load_from_json(json_file_path)
         print("Daten geladen")
 
         if data.get("analysis_summary", {}).get("total_commits", 0) > 0:
-            cc_anwendung = analyse_commit_chunks(data)
+            cc_anwendung = analyse_commit_chunks(data, repo_data["name"])
             if cc_anwendung:
                 cc_anwendungen += 1
+
+                commits = data.get("commits", {})
+                commits_reversed = commits[::-1]
+                # Angenommen, 'commits' ist deine Liste von Commit-Daten
+                commit_sequence = [1 if commit.get("cc_type") else 0 for commit in commits_reversed]
+
+                # Berechnung der CUSUM-Statistik
+                cusum_values = calculate_cusum(np.array(commit_sequence))
+                print(f"CUSUM-Werte: {cusum_values}")
+
+                signal = np.array(commit_sequence)
+                model = "l2"
+                algo = rpt.Binseg(model=model).fit(signal)
+                change_points = algo.predict(n_bkps=1)  # 'n_bkps' ist die Anzahl der Change Points, die du erwartest
+
+                print(f"Gefundene Change Points: {change_points}")
+
+                # 5. Bestimme den Change Point Index
+                if len(change_points) > 1:
+                    change_point_index = change_points[0]
+                    change_point_commit = commits_reversed[change_point_index]
+                    adoption_date = change_point_commit.get('committed_datetime')[:10]
+                    print(f"CC-Nutzung wurde ab dem {adoption_date} konsequent.")
+                else:
+                    print("Kein signifikanter Change Point gefunden.")
+
+                # Visualisierung
+                plot_heatmap(commit_sequence)
+
+                # Visualisierung
+                plot_cusum(cusum_values)
 
             print("Analyse abgeschlossen\n")
         else:
