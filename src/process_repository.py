@@ -3,11 +3,11 @@ import json
 from constants import ROOT
 from repository_manager import clone_repository, delete_temp
 from commit_loader import load_commits
-from data_enricher import enrich_commits
+from data_enricher import enrich_commits, should_analyze_cc_adoption
 from data_saver import save_to_json, load_from_json
 from analyzer import classify_repository
 from analyzer import search_for_cc_indications
-from testing import analyse_commit_chunks
+from testing import analyse_commit_chunks, binary_segmentation_date_analysis
 
 
 def record_classification(repo_name, language, classification):
@@ -50,6 +50,7 @@ def process_repository(repo_data, RESULTS_DIR):
     if json_file_path.exists():
         print(f"JSON-Datei für {repo_name} bereits vorhanden.")
         data = load_from_json(json_file_path)
+        summary = data.get("analysis_summary", {})
     else:
         # Lade die Commits und reiche sie an
         commits = load_commits(repo)
@@ -57,21 +58,23 @@ def process_repository(repo_data, RESULTS_DIR):
         save_to_json(enriched_commits, summary, repo_name, RESULTS_DIR)
         data = {"commits": enriched_commits, "analysis_summary": summary}
 
+    if should_analyze_cc_adoption(summary):
+        print(f"Analysiere nach CC-Einführungsdatum für {repo_name}")
+        binary_segmentation_date_analysis(data)
+
     analysis_summary = data.get("analysis_summary", {})
     cc_adoption_date = analysis_summary.get("cc_adoption_date")
     if cc_adoption_date:
         print(f"CC-Einführungsdatum für {repo_name}: {cc_adoption_date}")
+
     else:
         print(f"Keine CC-Einführung in {repo_name} festgestellt.")
 
-    analyse_commit_chunks(data)
     using_cc = search_for_cc_indications(repo)
     print(f"Repository {repo_name} verwendet Conventional Commits: {using_cc}")
 
     classification = classify_repository(analysis_summary, using_cc)
     print(f"Das Repository {repo_name} wird klassifiziert als: {classification}")
-
-
 
     # Klassifikation aufzeichnen
     record_classification(repo_name, language, classification)

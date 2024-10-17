@@ -8,7 +8,7 @@ import seaborn as sns
 from dateutil.relativedelta import relativedelta
 from matplotlib.lines import Line2D
 
-from constants import CHUNK_SIZE_PERCENT, NUM_CHUNKS, MIN_CC_PERCENTAGE
+from constants import CHUNK_SIZE_PERCENT, NUM_CHUNKS, MIN_CC_PERCENTAGE, MIN_CC_RATE, MIN_COMMITS_AFTER_CP
 from data_saver import load_from_json, load_dataset
 from repository_manager import clone_repository
 
@@ -98,17 +98,17 @@ def analyse_commit_chunks(commit_data, repository_name):
                 print("Unverändertes Ergebnis")
             else:
                 print("Neue CC-Nutzung erkannt")
-            return True
+            return adoption_date
         else:
             if analysis_summary.get("cc_adoption_date"):
                 print("CC-Nutzung nicht mehr erkannt")
             else:
                 print("Unverändertes Ergebnis")
             print("Keine konsequente CC-Nutzung")
-            return False
+            return None
     else:
         print("Zu wenige Commits für eine Analyse.")
-        return False
+        return None
 
 
 def visualize_commit_chunks(chunkliste, ganze_chunks):
@@ -187,13 +187,19 @@ def plot_cusum(values):
     plt.show()
 
 
-def plot_heatmap(sequence):
+def plot_heatmap(sequence, change_point_index, adoption_date):
     # 1. Daten vorbereiten
     heatmap_data = np.array(sequence).reshape(-1, 1)
 
+    sequence_size = len(sequence)
+    new_sequence = sequence[change_point_index:]
+    count_ones = sum(new_sequence)
+
     plt.figure(figsize=(12, 6))
     sns.heatmap(heatmap_data.T, cmap='YlGnBu', cbar=False)
-    plt.title('Heatmap der CC-Nutzung über Commits')
+    plt.title(f'übrige Commits: {sequence_size - change_point_index}, '
+              f'in Prozent: {round(((sequence_size - change_point_index) / sequence_size) * 100, 2)}%'
+              f', davon Conventional: {count_ones}, in Prozent: {round((count_ones / (sequence_size - change_point_index)) * 100, 2)}%')
 
     plt.axvline(x=change_point_index, color='red', linestyle='--', label='Change Point')
 
@@ -209,6 +215,58 @@ def plot_heatmap(sequence):
     plt.ylabel('CC-Nutzung')
     plt.yticks([])
     plt.show()
+
+
+def is_repository_conventional_after_cp(commit_sequence_after_cp):
+    # Extrahiere die Commits nach dem Change Point
+    total_commits_after_cp = len(commit_sequence_after_cp)
+    count_cc = sum(commit_sequence_after_cp)
+
+    if total_commits_after_cp < MIN_COMMITS_AFTER_CP:
+        return False
+
+    # Berechne die CC-Rate nach dem Change Point
+    cc_rate_after_cp = count_cc / total_commits_after_cp
+
+    if cc_rate_after_cp >= MIN_CC_RATE:
+        return True
+    else:
+        return False
+
+
+def binary_segmentation_date_analysis(commit_data):
+    adoption_date = None
+    commits = commit_data.get("commits", {})
+    summary = commit_data.get("analysis_summary", {})
+    commits_reversed = commits[::-1]
+    commit_sequence = [1 if commit.get("cc_type") else 0 for commit in commits_reversed]
+
+    # Berechnung der CUSUM-Statistik
+    cusum_values = calculate_cusum(np.array(commit_sequence))
+    print(f"CUSUM-Werte: {cusum_values}")
+
+    signal = np.array(commit_sequence)
+    model = "l2"
+    algo = rpt.Binseg(model=model).fit(signal)
+    change_points = algo.predict(n_bkps=1)  # 'n_bkps' ist die Anzahl der Change Points, die du erwartest
+
+    print(f"Gefundene Change Points: {change_points}")
+
+    # 5. Bestimme den Change Point Index
+    if len(change_points) > 1:
+        change_point_index = change_points[0]
+        commit_sequence_after_cp = commit_sequence[change_point_index:]
+        if is_repository_conventional_after_cp(commit_sequence_after_cp):
+            change_point_commit = commits_reversed[change_point_index]
+            adoption_date = change_point_commit.get('committed_datetime')[:10]
+            summary['cc_adoption_date'] = adoption_date
+            # plot_heatmap(commit_sequence, change_point_index, adoption_date)
+        print(f"CC-Nutzung wurde ab dem {adoption_date} konsequent.")
+    else:
+        print("Kein signifikanter Change Point gefunden.")
+
+    # Visualisierung
+    # plot_cusum(cusum_values)
 
 
 if __name__ == "__main__":
@@ -237,39 +295,11 @@ if __name__ == "__main__":
 
         if data.get("analysis_summary", {}).get("total_commits", 0) > 0:
             cc_anwendung = analyse_commit_chunks(data, repo_data["name"])
-            if cc_anwendung:
+            cc_date_old = data.get("analysis_summary", {}).get("cc_adoption_date")
+            if cc_anwendung or cc_date_old is not None:
                 cc_anwendungen += 1
 
-                commits = data.get("commits", {})
-                commits_reversed = commits[::-1]
-                # Angenommen, 'commits' ist deine Liste von Commit-Daten
-                commit_sequence = [1 if commit.get("cc_type") else 0 for commit in commits_reversed]
-
-                # Berechnung der CUSUM-Statistik
-                cusum_values = calculate_cusum(np.array(commit_sequence))
-                print(f"CUSUM-Werte: {cusum_values}")
-
-                signal = np.array(commit_sequence)
-                model = "l2"
-                algo = rpt.Binseg(model=model).fit(signal)
-                change_points = algo.predict(n_bkps=1)  # 'n_bkps' ist die Anzahl der Change Points, die du erwartest
-
-                print(f"Gefundene Change Points: {change_points}")
-
-                # 5. Bestimme den Change Point Index
-                if len(change_points) > 1:
-                    change_point_index = change_points[0]
-                    change_point_commit = commits_reversed[change_point_index]
-                    adoption_date = change_point_commit.get('committed_datetime')[:10]
-                    print(f"CC-Nutzung wurde ab dem {adoption_date} konsequent.")
-                else:
-                    print("Kein signifikanter Change Point gefunden.")
-
-                # Visualisierung
-                plot_heatmap(commit_sequence)
-
-                # Visualisierung
-                plot_cusum(cusum_values)
+                binary_segmentation_date_analysis(data, cc_anwendung)
 
             print("Analyse abgeschlossen\n")
         else:

@@ -1,3 +1,5 @@
+import json
+import os
 from pathlib import Path
 from data_saver import load_dataset
 from process_repository import process_repository
@@ -6,7 +8,10 @@ from visualization_utils import plot_cc_adoption_dates
 FILE = Path(__file__).resolve()
 ROOT = FILE.parents[0]
 RESULTS = ROOT / "results" / "commit_messages"
-YAML = ROOT / "data" / "test.yaml"
+YAML = ROOT / "data" / "dataset.yaml"
+
+
+
 
 
 if __name__ == "__main__":
@@ -22,4 +27,4 @@ if __name__ == "__main__":
         process_repository(repo_data, RESULTS)
         print(f"Processed {i} repos")
 
-    plot_cc_adoption_dates(RESULTS)
+    # plot_cc_adoption_dates(RESULTS)

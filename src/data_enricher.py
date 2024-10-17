@@ -75,6 +75,22 @@ def get_commit_type(message):
         return parsed['type']
     return None
 
+
+def should_analyze_cc_adoption(analysis_summary):
+    total_commits = analysis_summary.get("total_commits", 0)
+    cc_type_commits = analysis_summary.get("cc_type_commits", 0)
+
+    if total_commits == 0:
+        return False
+
+    cc_rate = cc_type_commits / total_commits
+
+    if cc_rate >= 0.10 and cc_type_commits >= 500:
+        return True
+    else:
+        return False
+
+
 def enrich_commits(commits):
     """
     Reicht die Commits mit Metadaten an und erstellt eine Zusammenfassung.
@@ -163,17 +179,18 @@ def enrich_commits(commits):
         'custom_type_commits': custom_type_commits,
         'custom_type_distribution': dict(custom_type_counter),
         'cc_type_distribution': dict(cc_type_counter),
+        'cc_adoption_date': None
     }
 
-    if cc_type_commits > 200:
-        cc_adoption_date = find_cc_adoption_date(
-            enriched_commits,
-            min_cc_percentage=0.6,
-            min_cc_commits=10
-        )
-        summary['cc_adoption_date'] = cc_adoption_date
-    else:
-        summary['cc_adoption_date'] = None
+    # if cc_type_commits > 200:
+    #     cc_adoption_date = find_cc_adoption_date(
+    #         enriched_commits,
+    #         min_cc_percentage=0.6,
+    #         min_cc_commits=10
+    #     )
+    #     summary['cc_adoption_date'] = cc_adoption_date
+    # else:
+    #     summary['cc_adoption_date'] = None
 
     return enriched_commits, summary
 
