@@ -1,4 +1,5 @@
 # commit_loader.py
+import re
 
 from git import GitCommandError
 import datetime
@@ -28,6 +29,9 @@ def load_commits(repo):
 
         lines = git_log_output.split('\n')
         current_commit = None
+
+        stats_regex = re.compile(r"(\d+) files? changed(, (\d+) insertions?\(\+\))?(, (\d+) deletions?\(-\))?")
+
         for line in lines:
             if ';' in line:
                 parts = line.strip().split(';')
@@ -42,17 +46,19 @@ def load_commits(repo):
                         'message': message.strip(),
                         'author': author.strip(),
                         'insertions': 0,
-                        'deletions': 0
+                        'deletions': 0,
+                        'files_changed': 0
                     }
                     commits.append(current_commit)
             elif line.strip() and current_commit:
-                parts = line.strip().split('\t')
-                if len(parts) == 3:
-                    insertions_str, deletions_str, filename = parts
-                    insertions = int(insertions_str) if insertions_str.isdigit() else 0
-                    deletions = int(deletions_str) if deletions_str.isdigit() else 0
+                match = stats_regex.search(line.strip())
+                if match:
+                    files_changed = int(match.group(1)) if match.group(1) else 0
+                    insertions = int(match.group(3)) if match.group(3) else 0
+                    deletions = int(match.group(5)) if match.group(5) else 0
                     current_commit['insertions'] += insertions
                     current_commit['deletions'] += deletions
+                    current_commit['files_changed'] += files_changed
         return commits
     except GitCommandError as e:
         print(f"Fehler beim Laden der Commits: {e}")

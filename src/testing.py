@@ -216,6 +216,36 @@ def plot_heatmap(sequence, change_point_index, adoption_date):
     plt.yticks([])
     plt.show()
 
+def plot_heatmap_non_cc(sequence, change_point_index, adoption_date):
+    # 1. Daten vorbereiten
+    heatmap_data = np.array(sequence).reshape(-1, 1)
+
+    sequence_size = len(sequence)
+    new_sequence = sequence[change_point_index:]
+    count_ones = sum(new_sequence)
+
+    plt.figure(figsize=(12, 6))
+    sns.heatmap(heatmap_data.T, cmap='YlGnBu', cbar=False)
+    plt.title(f'NICHT ERKANNT - übrige Commits: {sequence_size - change_point_index}, '
+              f'in Prozent: {round(((sequence_size - change_point_index) / sequence_size) * 100, 2)}%'
+              f', davon Conventional: {count_ones}, in Prozent: {round((count_ones / (sequence_size - change_point_index)) * 100, 2)}%')
+
+    plt.axvline(x=change_point_index, color='red', linestyle='--', label='Change Point')
+
+    # 5. Beschriftung des Change Points mit Hintergrund
+    plt.annotate(f'Change Point\n{adoption_date}',
+                 xy=(change_point_index, 0),
+                 xytext=(change_point_index + len(sequence) * 0.05, 0.2),
+                 arrowprops=dict(facecolor='red', shrink=0.05),
+                 fontsize=10, color='black',
+                 bbox=dict(boxstyle='round,pad=0.5', fc='yellow', ec='black', lw=1))
+
+    plt.xlabel('Commit-Index')
+    plt.ylabel('CC-Nutzung')
+    plt.yticks([])
+    plt.show()
+
+
 
 def is_repository_conventional_after_cp(commit_sequence_after_cp):
     # Extrahiere die Commits nach dem Change Point
@@ -234,36 +264,43 @@ def is_repository_conventional_after_cp(commit_sequence_after_cp):
         return False
 
 
-def binary_segmentation_date_analysis(commit_data):
-    adoption_date = None
-    commits = commit_data.get("commits", {})
-    summary = commit_data.get("analysis_summary", {})
-    commits_reversed = commits[::-1]
+def binary_segmentation_date_analysis(enriched_commits, summary):
+
+    commits_reversed = enriched_commits[::-1]
+
+    # binäre Sequenz erstellen aus Commits (1 = CC, 0 = Nicht-CC)
     commit_sequence = [1 if commit.get("cc_type") else 0 for commit in commits_reversed]
 
-    # Berechnung der CUSUM-Statistik
+    # CUSUM-Kurve berechnen für Abweichungen con Mittelwert
     cusum_values = calculate_cusum(np.array(commit_sequence))
     print(f"CUSUM-Werte: {cusum_values}")
 
+    # sequenz zu numpy_array
     signal = np.array(commit_sequence)
+
+    # l2 = quadratische Fehlerfunktion
     model = "l2"
+    # Algorithmus zur Berechnung der Change Points - Binary Segmentation Algorithmus
     algo = rpt.Binseg(model=model).fit(signal)
-    change_points = algo.predict(n_bkps=1)  # 'n_bkps' ist die Anzahl der Change Points, die du erwartest
+    change_points = algo.predict(n_bkps=1)  # 'n_bkps' = Anzahl der zu erwartenden Change Points
 
     print(f"Gefundene Change Points: {change_points}")
 
     # 5. Bestimme den Change Point Index
+    # wenn change point gefunden, dann testen ob auch vor dem Changepoint CC zu 50% angewandt wurde
+    # --> klassifizierung in: cc von anfang an, cc eingeführt, non-cc
     if len(change_points) > 1:
         change_point_index = change_points[0]
         commit_sequence_after_cp = commit_sequence[change_point_index:]
         if is_repository_conventional_after_cp(commit_sequence_after_cp):
             change_point_commit = commits_reversed[change_point_index]
             adoption_date = change_point_commit.get('committed_datetime')[:10]
-            summary['cc_adoption_date'] = adoption_date
-            # plot_heatmap(commit_sequence, change_point_index, adoption_date)
-        print(f"CC-Nutzung wurde ab dem {adoption_date} konsequent.")
+            #plot_heatmap(commit_sequence, change_point_index, adoption_date)
+            print(f"CC-Nutzung wurde ab dem {adoption_date} konsequent.")
+            return adoption_date
     else:
         print("Kein signifikanter Change Point gefunden.")
+        return None
 
     # Visualisierung
     # plot_cusum(cusum_values)

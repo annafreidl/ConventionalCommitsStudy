@@ -3,6 +3,7 @@ import re
 from collections import Counter
 from data_enricher import *
 from analyzer import find_cc_adoption_date
+from testing import binary_segmentation_date_analysis
 
 
 def identify_consistent_custom_types(custom_type_counter, total_commits, min_absolute=3, min_percentage=0.00):
@@ -181,6 +182,10 @@ def enrich_commits(commits):
         'cc_type_distribution': dict(cc_type_counter),
         'cc_adoption_date': None
     }
+
+    if should_analyze_cc_adoption(summary):
+        print(f"Analysiere nach CC-Einführungsdatum ")
+        summary['cc_adoption_date'] = binary_segmentation_date_analysis(enriched_commits, summary)
 
     # if cc_type_commits > 200:
     #     cc_adoption_date = find_cc_adoption_date(

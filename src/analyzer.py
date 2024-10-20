@@ -1,13 +1,24 @@
 # analyzer.py
 
+# Standardbibliotheken
 from pathlib import Path
+from typing import Dict, Optional, Tuple, List
+from collections import defaultdict, Counter
+from datetime import datetime
 import json
 import math
 import re
-from collections import defaultdict, Counter
-from datetime import datetime
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
 
+# Lokale Module
 from constants import MIN_CC_PERCENTAGE, MIN_CC_COMMITS
+from visualization_utils import (
+    plot_adoption_rate,
+    plot_aggregate_commit_types,
+    plot_adoption_rate_by_language
+)
 
 
 def classify_repository(analysis_summary, using_cc):
@@ -21,18 +32,17 @@ def classify_repository(analysis_summary, using_cc):
     Returns:
         str: Klassifikation des Repositories.
     """
+
     adoption_date_exists = analysis_summary.get("cc_adoption_date") is not None
 
-    if not using_cc and not adoption_date_exists:
-        return "nicht conventional"
-    elif not using_cc and adoption_date_exists:
-        return "nutzen CC, aber nicht als Vorgabe erkennbar"
-    elif using_cc and adoption_date_exists:
-        return "nutzen CC und als Vorgabe erkennbar"
-    elif using_cc and not adoption_date_exists:
-        return "Erwaehnung von CC, aber wird nicht genutzt"
-    else:
-        return "nicht eindeutig klassifizierbar"
+    classification_map = {
+        (False, False): "nicht conventional",
+        (False, True): "nutzen CC, aber nicht als Vorgabe erkennbar",
+        (True, True): "nutzen CC und als Vorgabe erkennbar",
+        (True, False): "Erwaehnung von CC, aber wird nicht genutzt"
+    }
+
+    return classification_map.get((using_cc, adoption_date_exists), "nicht eindeutig klassifizierbar")
 
 
 def search_for_cc_indications(repo_instance):
@@ -294,8 +304,6 @@ def calculate_monthly_conventional_commits(commits):
     return monthly_cc_type_percentage, monthly_custom_type_percentage
 
 
-# analyzer.py
-
 def filter_repositories(classifications, target_classification='nutzen CC und als Vorgabe erkennbar'):
     """
     Filtert Repositories basierend auf der Zielklassifikation.
@@ -404,9 +412,7 @@ def analyze_repository_from_existing_data(repo_name, results_dir):
     return analysis_results
 
 
-# analyzer.py
-
-def analyze_repositories_by_language(filtered_repos, results_dir):
+def analyze_repositories_by_language(filtered_repos: Dict[str, List[str]], results_dir: Path):
     """
     Analysiert Repositories nach Sprache unter Verwendung vorhandener Daten und aggregiert die Type Distribution pro Sprache.
 
@@ -441,3 +447,109 @@ def analyze_repositories_by_language(filtered_repos, results_dir):
             }
 
     return analysis_by_language
+
+
+def calculate_adoption_rate(summaries):
+    total_repos = len(summaries)
+    adopted_repos = sum(1 for s in summaries if s.get('cc_adoption_date', 0) is not None)
+    adoption_rate = adopted_repos / total_repos if total_repos > 0 else 0
+    print(f"Gesamtzahl der Repositories: {total_repos}")
+    print(f"Repositories mit CC-Nutzung: {adopted_repos}")
+    print(f"Adoptionsrate: {adoption_rate:.2%}")
+
+    plot_adoption_rate(adopted_repos, total_repos)
+
+
+def aggregate_commit_types(summaries, string):
+    total_cc_type_distribution = Counter(
+        ctype
+        for summary in summaries
+        for ctype, count in summary.get(string, {}).items()
+        for _ in range(count)
+    )
+
+    print("Gesamte CC-Typ-Verteilung:")
+    for ctype, count in total_cc_type_distribution.items():
+        print(f"{ctype}: {count}")
+
+    plot_aggregate_commit_types(dict(total_cc_type_distribution), string)
+
+
+def calculate_adoption_rate_by_language(summaries):
+    language_stats = defaultdict(lambda: {'total_repos': 0, 'adopted_repos': 0})
+
+    for summary in summaries:
+        language = summary.get('language', 'Unknown')
+        language_stats[language]['total_repos'] += 1
+        if summary.get('cc_adoption_date') is not None:
+            language_stats[language]['adopted_repos'] += 1
+
+    adoption_rates = {
+        language: (stats['adopted_repos'] / stats['total_repos'] * 100) if stats['total_repos'] > 0 else 0
+        for language, stats in language_stats.items()
+    }
+
+    for language, rate in adoption_rates.items():
+        print(f"Sprache: {language}")
+        print(f"  Gesamtzahl der Repositories: {language_stats[language]['total_repos']}")
+        print(f"  Repositories mit CC-Nutzung: {language_stats[language]['adopted_repos']}")
+        print(f"  Adoptionsrate: {rate:.2f}%")
+        print('-' * 40)
+
+    plot_adoption_rate_by_language(adoption_rates)
+
+    return adoption_rates
+
+
+def size_vs_cc_usage(summaries):
+    # Plot der Größe vs. CC-Nutzung
+    data = []
+    for summary in summaries:
+        is_conventional = summary['cc_adoption_date'] is not None
+        size = summary.get('size', 0)  # Standardgröße 0, falls nicht vorhanden
+        data.append({
+            'Repository': summary.get('repo_name', 'Unknown'),
+            'Konventionell': 'Ja' if is_conventional else 'Nein',
+            'Size': size
+        })
+
+    # Erstelle einen DataFrame
+    df = pd.DataFrame(data)
+
+    # Optional: Daten anzeigen
+    print(df)
+
+    # Schritt 2: Daten visualisieren
+
+    # Boxplot erstellen, um die Verteilung der Größen für konventionelle vs. nicht-konventionelle Repos zu vergleichen
+    plt.figure(figsize=(10, 6))
+    sns.boxplot(x='Konventionell', y='Size', data=df)
+    plt.title('Verteilung der Repository-Größen nach Konventionalität')
+    plt.xlabel('Konventionell')
+    plt.ylabel('Größe')
+    plt.show()
+
+    # Alternativ: Scatterplot mit Jitter, um die Datenpunkte besser sichtbar zu machen
+    plt.figure(figsize=(10, 6))
+    sns.stripplot(x='Konventionell', y='Size', data=df, jitter=True, alpha=0.7)
+    plt.title('Repository-Größe nach Konventionalität')
+    plt.xlabel('Konventionell')
+    plt.ylabel('Größe')
+    plt.show()
+
+    # Schritt 3: Statistische Analyse (z.B. Mittelwerte)
+    mean_sizes = df.groupby('Konventionell')['Size'].mean().reset_index()
+    print(mean_sizes)
+
+    # Schritt 4: Korrelationskoeffizient berechnen: Da 'Konventionell' eine kategoriale Variable ist, kannst du z.B.
+    # den Mittelwert vergleichen oder einen t-Test durchführen. Alternativ, kodieren wir 'Konventionell' als binär
+    # und berechnen den Punktbiserialen Korrelationskoeffizienten.
+
+    from scipy.stats import pointbiserialr
+
+    # Kodieren: 'Ja' = 1, 'Nein' = 0
+    df['Konv_Binary'] = df['Konventionell'].map({'Ja': 1, 'Nein': 0})
+
+    # Berechne den Punktbiserialen Korrelationskoeffizienten
+    corr, p_value = pointbiserialr(df['Konv_Binary'], df['Size'])
+    print(f"Punktbiserialer Korrelationskoeffizient: {corr:.3f}, p-Wert: {p_value:.3f}")

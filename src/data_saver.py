@@ -1,6 +1,7 @@
 # data_saver.py
-
 import json
+import os
+
 import yaml
 from pathlib import Path
 
@@ -54,7 +55,21 @@ def load_dataset(yaml_path):
             data = yaml.safe_load(file)
 
         extracted_data = [
-            {"name": d["name"], "clone_url": d["clone_url"], "language": d["language"]}
+            {"id": d["id"],
+             "name": d["name"],
+             "clone_url": d["clone_url"],
+             "language": d["language"],
+             "size": d["size"],
+             "owner": d["owner"].get("type"),
+             "homepage": d.get("homepage", ""),
+             "default_branch": d["default_branch"],
+             "pushed_at": d["pushed_at"].isoformat() + 'Z',
+             "created_at": d["created_at"].isoformat() + 'Z',
+             "updated_at": d["updated_at"].isoformat() + 'Z',
+             "archived": d["archived"],
+             "forks_count": d["forks_count"],
+             "stargazers_count": d["stargazers_count"]
+             }
             for d in data if "name" in d and "clone_url" in d and "language" in d
         ]
 
@@ -83,3 +98,15 @@ def load_classifications(classification_file):
         classifications = json.load(f)
     return classifications
 
+
+def load_analysis_summaries(results_dir):
+    summaries = []
+    for filename in os.listdir(results_dir):
+        filepath = os.path.join(results_dir, filename)
+        with open(filepath, 'r') as f:
+            data = json.load(f)
+            repo_name = filename.replace('_commit_messages.json', '')
+            summary = data.get('analysis_summary', {})
+            summary['repo_name'] = repo_name
+            summaries.append(summary)
+    return summaries

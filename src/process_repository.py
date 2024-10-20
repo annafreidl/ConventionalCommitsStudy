@@ -40,6 +40,13 @@ def record_classification(repo_name, language, classification):
 def process_repository(repo_data, RESULTS_DIR):
     repo_name = repo_data["name"].replace("/", "_")
     language = repo_data.get('language', 'Unknown')
+    size = repo_data.get('size', 0)
+    identity = repo_data.get('id', 0)
+    owner = repo_data.get('owner', {})
+    pushed_at = repo_data.get('pushed_at', '')
+    created_at = repo_data.get('created_at', '')
+    updated_at = repo_data.get('updated_at', '')
+    forks_count = repo_data.get('forks_count', 0)
     json_file_path = RESULTS_DIR / f"{repo_name}_commit_messages.json"
 
     # Versuche, das Repository zu laden oder zu klonen
@@ -50,17 +57,20 @@ def process_repository(repo_data, RESULTS_DIR):
     if json_file_path.exists():
         print(f"JSON-Datei für {repo_name} bereits vorhanden.")
         data = load_from_json(json_file_path)
-        summary = data.get("analysis_summary", {})
     else:
         # Lade die Commits und reiche sie an
         commits = load_commits(repo)
         enriched_commits, summary = enrich_commits(commits)
+        summary["language"] = language
+        summary["size"] = size
+        summary["id"] = identity
+        summary["owner"] = owner
+        summary["pushed_at"] = pushed_at
+        summary["created_at"] = created_at
+        summary["updated_at"] = updated_at
+        summary["forks_count"] = forks_count
         save_to_json(enriched_commits, summary, repo_name, RESULTS_DIR)
         data = {"commits": enriched_commits, "analysis_summary": summary}
-
-    if should_analyze_cc_adoption(summary):
-        print(f"Analysiere nach CC-Einführungsdatum für {repo_name}")
-        binary_segmentation_date_analysis(data)
 
     analysis_summary = data.get("analysis_summary", {})
     cc_adoption_date = analysis_summary.get("cc_adoption_date")

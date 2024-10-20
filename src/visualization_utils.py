@@ -1,9 +1,14 @@
 import json
+import logging
 from collections import defaultdict
 from pathlib import Path
-import matplotlib.pyplot as plt
+from typing import List, Optional, Dict
 
-from analyzer import filter_repositories, analyze_repositories_by_language
+import matplotlib.pyplot as plt
+import seaborn as sns
+import numpy as np
+import pandas as pd
+
 from constants import ROOT
 from data_saver import load_classifications
 
@@ -171,10 +176,6 @@ def plot_cc_adoption_dates(results_dir):
     plt.show()
 
 
-# Aufruf der Funktion im Hauptteil
-# if __name__ == "__main__":
-#     visualize_type_distribution('C:\\Users\\annaf\\PycharmProjects\\Bachelorarbeit\\src\\results\\custom_types.json')
-
 def plot_classification_by_language(classification_file, output_dir):
     """
     Liest den Klassifikationsindex ein, sammelt die Daten und erstellt für jede Programmiersprache ein Diagramm der Repository-Klassifikationen.
@@ -217,12 +218,10 @@ def plot_classification_by_language(classification_file, output_dir):
 
         # Diagramm speichern
         safe_language_name = language.replace(" ", "_").replace("/", "_")
-        output_file = output_dir / f"classification_{safe_language_name}.png"
+        output_file = output_dir / f"classification_{safe_language_name}.png"  # .pdf
         plt.savefig(output_file)
         plt.close()
 
-
-# visualization_utils.py
 
 def plot_cc_consistency_per_language(analysis_by_language, output_dir):
     """
@@ -247,7 +246,7 @@ def plot_cc_consistency_per_language(analysis_by_language, output_dir):
     # Werte über die Balken schreiben
     for bar, ratio in zip(bars, cc_ratios):
         yval = bar.get_height()
-        plt.text(bar.get_x() + bar.get_width()/2.0, yval + 1, f'{ratio:.1f}%', ha='center', va='bottom')
+        plt.text(bar.get_x() + bar.get_width() / 2.0, yval + 1, f'{ratio:.1f}%', ha='center', va='bottom')
 
     plt.tight_layout()
     # Plot speichern
@@ -255,7 +254,6 @@ def plot_cc_consistency_per_language(analysis_by_language, output_dir):
     plt.savefig(output_file)
     plt.close()
 
-# visualization_utils.py
 
 def plot_commit_type_distribution_per_language(analysis_by_language, output_dir, top_n=10):
     """
@@ -286,7 +284,7 @@ def plot_commit_type_distribution_per_language(analysis_by_language, output_dir,
         # Werte über die Balken schreiben
         for bar, count in zip(bars, counts):
             yval = bar.get_height()
-            plt.text(bar.get_x() + bar.get_width()/2.0, yval + 0.1, int(count), ha='center', va='bottom')
+            plt.text(bar.get_x() + bar.get_width() / 2.0, yval + 0.1, int(count), ha='center', va='bottom')
 
         plt.tight_layout()
         # Plot speichern
@@ -324,7 +322,7 @@ def plot_commit_type_distribution(analysis_by_language, output_dir):
             # Werte über die Balken schreiben
             for bar, count in zip(bars, counts):
                 yval = bar.get_height()
-                plt.text(bar.get_x() + bar.get_width()/2.0, yval + 0.1, int(count), ha='center', va='bottom')
+                plt.text(bar.get_x() + bar.get_width() / 2.0, yval + 0.1, int(count), ha='center', va='bottom')
 
             plt.tight_layout()
             # Plot speichern
@@ -335,25 +333,258 @@ def plot_commit_type_distribution(analysis_by_language, output_dir):
             plt.close()
 
 
-if __name__ == "__main__":
-    # Pfade zu deinen Daten
-    RESULTS_DIR = ROOT / "results" / "commit_messages" # Ersetze durch deinen tatsächlichen Pfad
-    classification_file = ROOT / "results" / "repository_classifications.json"
-    OUTPUT_DIR = ROOT / "results"  # Ersetze durch dein gewünschtes Ausgabeverzeichnis
+def plot_adoption_rate(adopted_repos, total_repos):
+    not_adopted = total_repos - adopted_repos
 
-    # Klassifikationen laden
-    classifications = load_classifications(classification_file)
+    labels = ['CC-Adoptiert', 'Nicht CC-Adoptiert']
+    sizes = [adopted_repos, not_adopted]
+    colors = ['green', 'red']
 
-    # Repositories filtern
-    filtered_repos = filter_repositories(classifications, target_classification='nutzen CC und als Vorgabe erkennbar')
+    plt.figure(figsize=(6, 6))
+    plt.pie(sizes, labels=labels, colors=colors, autopct='%1.1f%%', startangle=140)
+    plt.title('Adoptionsrate von Conventional Commits')
+    plt.axis('equal')
+    plt.savefig(ROOT / "results" / "diagrams" / 'overall_cc_adoptionsrate.png')
+    plt.show()
 
-    # Repositories analysieren
-    analysis_by_language = analyze_repositories_by_language(filtered_repos, RESULTS_DIR)
 
-    # CC-Konsistenz plotten
-    cc_consistency_output_dir = OUTPUT_DIR / "cc_consistency"
-    plot_cc_consistency_per_language(analysis_by_language, cc_consistency_output_dir)
+def plot_aggregate_commit_types(total_cc_type_distribution, string):
+    # Sortiere die Typen nach Häufigkeit
+    types = list(total_cc_type_distribution.keys())
+    counts = [total_cc_type_distribution[ctype] for ctype in types]
+    data = sorted(zip(counts, types), reverse=True)
+    counts_sorted, types_sorted = zip(*data[:30])
 
-    # Commit-Typ-Verteilung plotten
-    commit_type_output_dir = OUTPUT_DIR / "commit_type_distribution"
-    plot_commit_type_distribution_per_language(analysis_by_language, commit_type_output_dir)
+    plt.figure(figsize=(10, 6))
+    bars = plt.bar(types_sorted, counts_sorted, color='purple')
+    plt.xlabel('Commit-Typ')
+    plt.ylabel('Anzahl')
+    plt.title('Gesamte Verteilung der Commit-Typen')
+    plt.xticks(rotation=45)
+
+    for bar in bars:
+        yval = bar.get_height()
+        plt.text(bar.get_x() + bar.get_width() / 2, yval, int(yval), ha='center', va='bottom',
+                 fontsize=7)  # Schriftgröße anpassen
+
+    plt.tight_layout()
+    plt.savefig(ROOT / "results" / "diagrams" / f'overall_{string}.png')
+    plt.show()
+
+
+def plot_adoption_rate_by_language(adoption_rates):
+    languages = list(adoption_rates.keys())
+    rates = [adoption_rates[lang] * 100 for lang in languages]
+
+    plt.figure(figsize=(12, 6))
+    bars = plt.bar(languages, rates, color='skyblue')
+    plt.xlabel('Programmiersprache')
+    plt.ylabel('Adoptionsrate (%)')
+    plt.title('Adoptionsrate von Conventional Commits nach Programmiersprache')
+
+    # Prozentwerte über den Balken anzeigen
+    for bar in bars:
+        height = bar.get_height()
+        plt.text(bar.get_x() + bar.get_width() / 2.0, height, f'{height:.1f}%', ha='center', va='bottom')
+
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.savefig(ROOT / "results" / "diagrams" / f'adoption_rate_by_language.png')
+    plt.show()
+
+
+def plot_scatter(
+        x: List[float],
+        y: List[float],
+        title: str,
+        xlabel: str,
+        ylabel: str,
+        trendline: bool = True,
+        correlation: bool = True,
+        colors: Optional[List[str]] = None,
+        save_path: Optional[Path] = None,
+        show: bool = True
+):
+    """
+    Generiert einen Scatter-Plot und optional eine Trendlinie sowie den Korrelationskoeffizienten.
+
+    Args:
+        x (List[float]): Daten für die x-Achse.
+        y (List[float]): Daten für die y-Achse.
+        title (str): Titel des Diagramms.
+        xlabel (str): Beschriftung der x-Achse.
+        ylabel (str): Beschriftung der y-Achse.
+        trendline (bool, optional): Ob eine Trendlinie hinzugefügt werden soll. Standard ist True.
+        correlation (bool, optional): Ob der Korrelationskoeffizient angezeigt werden soll. Standard ist True.
+        colors (List[str], optional): Farben der Punkte. Standard ist Blau.
+        save_path (Path, optional): Pfad zum Speichern des Diagramms.
+        show (bool, optional): Ob das Diagramm angezeigt werden soll. Standard ist True.
+    """
+    plt.figure(figsize=(10, 6))
+    plt.scatter(x, y, color=colors if colors else 'blue', alpha=0.6, edgecolors='w', linewidth=0.5)
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.title(title)
+    plt.grid(True)
+
+    # Trendlinie hinzufügen
+    if trendline and len(x) > 1:
+        m, b = np.polyfit(x, y, 1)
+        plt.plot(x, [m * xi + b for xi in x], color='red', linewidth=2, label='Trendlinie')
+
+    # Korrelationskoeffizienten berechnen und anzeigen
+    if correlation and len(x) > 1:
+        corr_coef = np.corrcoef(x, y)[0, 1]
+        plt.annotate(f'Korrelationskoeffizient: {corr_coef:.2f}',
+                     xy=(0.05, 0.95), xycoords='axes fraction',
+                     fontsize=12, ha='left', va='top',
+                     bbox=dict(boxstyle="round,pad=0.3", fc="yellow", alpha=0.5))
+
+    if trendline and len(x) > 1:
+        plt.legend()
+
+    plt.tight_layout()
+    if save_path:
+        plt.savefig(save_path)
+        print(f"Scatter-Plot gespeichert: {save_path}")
+    if show:
+        plt.show()
+    plt.close()
+
+
+def plot_size_vs_cc_usage(
+        summaries: List[Dict],
+        save_path: Optional[Path] = None,
+        show: bool = True
+):
+    """
+    Berechnet den Zusammenhang zwischen Repository-Größe und CC-Nutzung und plottet diesen.
+
+    Args:
+        summaries (List[Dict]): Liste der Analysezusammenfassungen für jedes Repository.
+        save_path (Path, optional): Pfad zum Speichern des Scatter-Plots. Standard ist None.
+        show (bool, optional): Ob der Scatter-Plot angezeigt werden soll. Standard ist True.
+
+    Returns:
+        None
+    """
+    sizes = []
+    cc_usages = []
+
+    for summary in summaries:
+        size = summary.get('size')
+        total_commits = summary.get('total_commits', 0)
+        conventional_commits = summary.get('cc_type_commits', 0)
+
+        if size is None or total_commits == 0:
+            print(f"Repository {summary.get('repo_name', 'Unknown')} hat keine gültige Größe oder keine Commits.")
+            continue
+
+        cc_usage_percentage = (conventional_commits / total_commits) * 100
+        sizes.append(size)
+        cc_usages.append(cc_usage_percentage)
+
+    if not sizes or not cc_usages:
+        print.error("Keine gültigen Daten zum Plotten verfügbar.")
+        return
+
+    title = "Zusammenhang zwischen Repository-Größe und CC-Nutzung"
+    xlabel = "Repository-Größe (KB)"
+    ylabel = "CC-Nutzung (%)"
+
+    plot_scatter(
+        x=sizes,
+        y=cc_usages,
+        title=title,
+        xlabel=xlabel,
+        ylabel=ylabel,
+        trendline=True,
+        correlation=True,
+        colors=None,  # Optional: Passe die Farbe der Punkte an
+        save_path=save_path,
+        show=show
+    )
+
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+from pathlib import Path
+from typing import List, Dict, Optional
+import logging
+
+
+def plot_size_vs_cc_usage_stripplot(
+        summaries: List[Dict],
+        save_path: Optional[Path] = None,
+        show: bool = True
+):
+    """
+    Erstellt einen Strip Plot, der den Zusammenhang zwischen Repository-Größe und CC-Nutzung zeigt.
+    Die y-Achse repräsentiert die Repository-Größe, und die x-Achse zeigt den Konventionalitätsstatus.
+
+    Args:
+        summaries (List[Dict]): Liste der Analysezusammenfassungen für jedes Repository.
+        save_path (Path, optional): Pfad zum Speichern des Plots. Standard ist None.
+        show (bool, optional): Ob der Plot angezeigt werden soll. Standard ist True.
+
+    Returns:
+        None
+    """
+    # Filtere Repositories mit gültiger Größe und Commits
+    filtered_summaries = [
+        summary for summary in summaries
+        if summary.get('size') is not None
+    ]
+
+    if not filtered_summaries:
+        logging.error("Keine gültigen Daten zum Plotten verfügbar.")
+        return
+
+    # Erstelle ein DataFrame mit den Daten
+    df = pd.DataFrame({
+        'size': [summary['size'] for summary in filtered_summaries],
+        'cc_adoption': ['Conventional' if summary.get('cc_adoption_date') else 'Non-Conventional' for summary in
+                        filtered_summaries]
+    })
+
+    # Sortiere das DataFrame nach Größe
+    df = df.sort_values(by='size')
+
+    # Erstelle den Strip Plot
+    plt.figure(figsize=(10, 8))
+    sns.stripplot(x='size', y='cc_adoption', data=df, jitter=True, alpha=0.6,
+                  palette={'Conventional': 'yellowgreen', 'Non-Conventional': 'lightyellow'})
+    plt.title("Zusammenhang zwischen Repository-Größe und CC-Nutzung (Strip Plot)")
+    plt.xlabel("CC Nutzung")
+    plt.ylabel("Repository-Größe (KB)")
+    plt.tight_layout()
+
+    if save_path:
+        plt.savefig(save_path, bbox_inches='tight')
+        logging.info(f"Strip Plot gespeichert: {save_path}")
+    if show:
+        plt.show()
+    plt.close()
+
+# if __name__ == "__main__":
+# Pfade zu deinen Daten
+# RESULTS_DIR = ROOT / "results" / "commit_messages"  # Ersetze durch deinen tatsächlichen Pfad
+# classification_file = ROOT / "results" / "repository_classifications.json"
+# OUTPUT_DIR = ROOT / "results"  # Ersetze durch dein gewünschtes Ausgabeverzeichnis
+#
+# # Klassifikationen laden
+# classifications = load_classifications(classification_file)
+#
+# # Repositories filtern
+# filtered_repos = filter_repositories(classifications, target_classification='nutzen CC und als Vorgabe erkennbar')
+#
+# # Repositories analysieren
+# analysis_by_language = analyze_repositories_by_language(filtered_repos, RESULTS_DIR)
+#
+# # CC-Konsistenz plotten
+# cc_consistency_output_dir = OUTPUT_DIR / "cc_consistency"
+# plot_cc_consistency_per_language(analysis_by_language, cc_consistency_output_dir)
+#
+# # Commit-Typ-Verteilung plotten
+# commit_type_output_dir = OUTPUT_DIR / "commit_type_distribution"
+# plot_commit_type_distribution_per_language(analysis_by_language, commit_type_output_dir)
