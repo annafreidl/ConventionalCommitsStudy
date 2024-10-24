@@ -37,8 +37,7 @@ def counter(self, message, *args, **kws):
         self._log(COUNTER_LEVEL, message, args, **kws)
 
 
-if __name__ == "__main__":
-
+def set_logging():
     logging.addLevelName(COUNTER_LEVEL, 'COUNTER')
     logging.Logger.counter = counter
 
@@ -69,6 +68,13 @@ if __name__ == "__main__":
 
     # Fügen Sie den Handler dem Logger hinzu
     logger.handlers = [handler]
+
+    return logger
+
+
+if __name__ == "__main__":
+
+    logger = set_logging()
 
     RESULTS.mkdir(exist_ok=True)
     repos = load_dataset(YAML)
