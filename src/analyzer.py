@@ -8,10 +8,12 @@ from collections import defaultdict, Counter
 from datetime import datetime
 import json
 import math
-import re
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import requests
+from bs4 import BeautifulSoup
+import re
 
 # Lokale Module
 from constants import MIN_CC_PERCENTAGE, MIN_CC_COMMITS
@@ -46,6 +48,57 @@ def classify_repository(analysis_summary, using_cc):
     return classification_map.get((using_cc, adoption_date_exists), "nicht eindeutig klassifizierbar")
 
 
+def check_homepage_for_cc(homepage_url):
+    """
+    Durchsucht die Homepage des Repositories nach Hinweisen auf die Conventional Commit Konvention.
+
+    Args:
+        homepage_url (str): URL der Homepage des Repositories.
+
+    Returns:
+        bool: True, wenn Hinweise gefunden wurden, sonst False.
+    """
+    keywords = [
+        "Conventional Commits",
+        "Conventional Commit",
+        "conventionalcommits.org",
+        "Conventional Changelog",
+        "Commit Message Convention",
+        "Commit Guidelines",
+        "commitizen",
+        "commitlint",
+        "standard-version",
+        "semantic-release"
+    ]
+
+    print(f"Überprüfe Homepage: {homepage_url}")
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (compatible; CCChecker/1.0)"
+    }
+
+    try:
+        response = requests.get(homepage_url, headers=headers, timeout=10)
+        response.raise_for_status()  # Prüft auf HTTP-Fehler
+    except requests.exceptions.RequestException as e:
+        print(f"Fehler beim Abrufen der Homepage {homepage_url}: {e}")
+        return False
+
+    # HTML-Inhalt parsen
+    soup = BeautifulSoup(response.content, 'html.parser')
+
+    # Sichtbaren Text extrahieren
+    text = soup.get_text(separator=' ', strip=True)
+
+    # Durchsuchen des Textes nach Schlüsselwörtern
+    for keyword in keywords:
+        if re.search(r'\b' + re.escape(keyword) + r'\b', text, re.IGNORECASE):
+            print(f"Keyword '{keyword}' gefunden auf der Homepage.")
+            return True  # Hinweise gefunden
+
+    return False  # Keine Hinweise gefunden
+
+
 def search_for_cc_indications(repo_instance):
     """
     Überprüft, ob ein Repository die Conventional Commits-Konvention verwendet,
@@ -75,7 +128,7 @@ def search_for_cc_indications(repo_instance):
     cc_detected = check_git_hooks(local_path) or cc_detected
 
     # 4. Durchsicht der Dokumentation und wiki
-    cc_detected = check_documentation_for_cc(local_path) or cc_detected
+    cc_detected = check_docu_wiki_for_cc(local_path) or cc_detected
 
     if cc_detected:
         print("Hinweise auf die Verwendung der Conventional Commit Konvention gefunden.")
@@ -183,7 +236,7 @@ def check_git_hooks(local_path):
     return False
 
 
-def check_documentation_for_cc(local_path):
+def check_docu_wiki_for_cc(local_path):
     """
     Durchsucht Dokumentationsdateien und das Wiki nach Erwähnungen der Conventional Commit Konvention.
 

@@ -1,11 +1,17 @@
+import logging
 from pathlib import Path
+
+import colorlog as colorlog
+
 from data_saver import load_dataset, load_analysis_summaries
 from process_repository import process_repository
 
+COUNTER_LEVEL = 25
 FILE = Path(__file__).resolve()
 ROOT = FILE.parents[0]
 RESULTS = ROOT / "results" / "commit_messages_test"
 YAML = ROOT / "data" / "test.yaml"
+
 
 # RQ1: Analysing the consistency of CC applications and the distribution and frequency
 # of commit types.
@@ -26,7 +32,44 @@ YAML = ROOT / "data" / "test.yaml"
 # ence project management tasks such as effort estimation and resource allocation?
 # Is it possible to identify correlations between commit patterns and project outcomes
 
+def counter(self, message, *args, **kws):
+    if self.isEnabledFor(COUNTER_LEVEL):
+        self._log(COUNTER_LEVEL, message, args, **kws)
+
+
 if __name__ == "__main__":
+
+    logging.addLevelName(COUNTER_LEVEL, 'COUNTER')
+    logging.Logger.counter = counter
+
+    # Erstellen Sie einen Logger
+    logger = logging.getLogger()
+
+    # Legen Sie den Log-Level fest
+    logger.setLevel(logging.INFO)
+
+    # Definieren Sie das Log-Format mit Farben
+    log_format = (
+        '%(log_color)s [%(levelname)s] %(message)s'
+    )
+
+    # Definieren Sie die Farben für die Log-Levels
+    log_colors = {
+        'DEBUG': 'cyan',
+        'INFO': 'green',
+        'WARNING': 'yellow',
+        'ERROR': 'red',
+        'CRITICAL': 'bold_red',
+        'COUNTER': 'blue'
+    }
+
+    # Erstellen Sie einen Handler für die Konsole
+    handler = logging.StreamHandler()
+    handler.setFormatter(colorlog.ColoredFormatter(log_format, log_colors=log_colors))
+
+    # Fügen Sie den Handler dem Logger hinzu
+    logger.handlers = [handler]
+
     RESULTS.mkdir(exist_ok=True)
     repos = load_dataset(YAML)
 
@@ -35,8 +78,7 @@ if __name__ == "__main__":
     for repo_data in repos:
         i += 1
         process_repository(repo_data, RESULTS)
-        print(f"Processed {i} repos")
-
+        logger.counter(f"Processed {i} repos")
 
 #TODO:  1.1 Overall Adoption Rate - Alle Repos
 # 1.1.1 Adoption Rate by Programming Language
@@ -75,10 +117,3 @@ if __name__ == "__main__":
 # 1.4.1 Effekt auf Effort Estimation
 # 1.4.2 Effekt auf Resource Allocation
 # 1.4.3 Effekt auf Projektmanagement-Tasks
-
-
-
-
-
-
-
