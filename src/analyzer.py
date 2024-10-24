@@ -527,15 +527,7 @@ def analyze_repositories_by_language(filtered_repos: Dict[str, List[str]], resul
     return analysis_by_language
 
 
-def calculate_adoption_rate(summaries):
-    total_repos = len(summaries)
-    adopted_repos = sum(1 for s in summaries if s.get('cc_adoption_date', 0) is not None)
-    adoption_rate = adopted_repos / total_repos if total_repos > 0 else 0
-    print(f"Gesamtzahl der Repositories: {total_repos}")
-    print(f"Repositories mit CC-Nutzung: {adopted_repos}")
-    print(f"Adoptionsrate: {adoption_rate:.2%}")
 
-    plot_adoption_rate(adopted_repos, total_repos)
 
 
 def aggregate_commit_types(summaries, string):
@@ -551,32 +543,6 @@ def aggregate_commit_types(summaries, string):
         print(f"{ctype}: {count}")
 
     plot_aggregate_commit_types(dict(total_cc_type_distribution), string)
-
-
-def calculate_adoption_rate_by_language(summaries):
-    language_stats = defaultdict(lambda: {'total_repos': 0, 'adopted_repos': 0})
-
-    for summary in summaries:
-        language = summary.get('language', 'Unknown')
-        language_stats[language]['total_repos'] += 1
-        if summary.get('cc_adoption_date') is not None:
-            language_stats[language]['adopted_repos'] += 1
-
-    adoption_rates = {
-        language: (stats['adopted_repos'] / stats['total_repos'] * 100) if stats['total_repos'] > 0 else 0
-        for language, stats in language_stats.items()
-    }
-
-    for language, rate in adoption_rates.items():
-        print(f"Sprache: {language}")
-        print(f"  Gesamtzahl der Repositories: {language_stats[language]['total_repos']}")
-        print(f"  Repositories mit CC-Nutzung: {language_stats[language]['adopted_repos']}")
-        print(f"  Adoptionsrate: {rate:.2f}%")
-        print('-' * 40)
-
-    plot_adoption_rate_by_language(adoption_rates)
-
-    return adoption_rates
 
 
 def size_vs_cc_usage(summaries):
