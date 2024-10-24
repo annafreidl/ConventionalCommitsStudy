@@ -68,7 +68,8 @@ def load_dataset(yaml_path):
              "updated_at": d["updated_at"].isoformat() + 'Z',
              "archived": d["archived"],
              "forks_count": d["forks_count"],
-             "stargazers_count": d["stargazers_count"]
+             "stargazers_count": d["stargazers_count"],
+             "has_wiki": d["has_wiki"]
              }
             for d in data if "name" in d and "clone_url" in d and "language" in d
         ]

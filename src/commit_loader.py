@@ -23,7 +23,7 @@ def load_commits(repo):
     try:
         git_log_output = repo.git.log(
             default_branch,
-            pretty="%H;%ct;%cn;%s",
+            pretty="%H;%ct;%an;%s",
             shortstat=True
         )
 
@@ -41,6 +41,7 @@ def load_commits(repo):
                     committed_datetime = datetime.datetime.utcfromtimestamp(timestamp).isoformat()
                     author = parts[2]
                     message = parts[3]
+
                     current_commit = {
                         'committed_datetime': committed_datetime,
                         'message': message.strip(),
@@ -49,7 +50,6 @@ def load_commits(repo):
                         'deletions': 0,
                         'files_changed': 0
                     }
-                    commits.append(current_commit)
             elif line.strip() and current_commit:
                 match = stats_regex.search(line.strip())
                 if match:
@@ -59,6 +59,10 @@ def load_commits(repo):
                     current_commit['insertions'] += insertions
                     current_commit['deletions'] += deletions
                     current_commit['files_changed'] += files_changed
+
+                    if current_commit['files_changed'] > 0:
+                        commits.append(current_commit)
+                    current_commit = None
         return commits
     except GitCommandError as e:
         print(f"Fehler beim Laden der Commits: {e}")

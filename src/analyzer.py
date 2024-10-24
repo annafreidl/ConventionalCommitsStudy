@@ -1,6 +1,7 @@
 # analyzer.py
 
 # Standardbibliotheken
+import os
 from pathlib import Path
 from typing import Dict, Optional, Tuple, List
 from collections import defaultdict, Counter
@@ -73,7 +74,7 @@ def search_for_cc_indications(repo_instance):
     # 3. Überprüfung der Git Hooks
     cc_detected = check_git_hooks(local_path) or cc_detected
 
-    # 4. Durchsicht der Dokumentation
+    # 4. Durchsicht der Dokumentation und wiki
     cc_detected = check_documentation_for_cc(local_path) or cc_detected
 
     if cc_detected:
@@ -184,7 +185,7 @@ def check_git_hooks(local_path):
 
 def check_documentation_for_cc(local_path):
     """
-    Durchsucht Dokumentationsdateien nach Erwähnungen der Conventional Commit Konvention.
+    Durchsucht Dokumentationsdateien und das Wiki nach Erwähnungen der Conventional Commit Konvention.
 
     Args:
         local_path (Path): Pfad zum lokalen Repository.
@@ -200,6 +201,8 @@ def check_documentation_for_cc(local_path):
 
     keywords = [
         "Conventional Commits",
+        "Conventional Commit",
+        "Conventional Changelog",
         "Commit Message Convention",
         "Commit Guidelines",
         "commitizen",
@@ -208,6 +211,7 @@ def check_documentation_for_cc(local_path):
         "semantic-release"
     ]
 
+    # Durchsuchen der Dokumentationsdateien im Hauptverzeichnis
     for doc_file in doc_files:
         doc_path = local_path / doc_file
         if doc_path.exists():
@@ -216,8 +220,28 @@ def check_documentation_for_cc(local_path):
                 for keyword in keywords:
                     if re.search(r'\b' + re.escape(keyword) + r'\b', content, re.IGNORECASE):
                         print(f"Keyword '{keyword}' gefunden in {doc_file}")
-                        return True
-    return False
+                        return True  # Hinweise gefunden
+
+    # Durchsuchen des Wikis
+    wiki_dir = local_path / '.wiki'
+    if wiki_dir.exists():
+        for root, dirs, files in os.walk(wiki_dir):
+            for file in files:
+                if file.endswith(('.md', '.txt', '.rst', '.adoc')):  # Textbasierte Dateien
+                    file_path = Path(root) / file
+                    try:
+                        with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                            content = f.read()
+                            for keyword in keywords:
+                                if re.search(r'\b' + re.escape(keyword) + r'\b', content, re.IGNORECASE):
+                                    print(f"Keyword '{keyword}' gefunden in Wiki-Datei: {file_path}")
+                                    return True  # Hinweise gefunden
+                    except Exception as e:
+                        print(f"Fehler beim Lesen der Datei {file_path}: {e}")
+    else:
+        print("Kein Wiki-Verzeichnis gefunden. Überspringe die Wiki-Prüfung.")
+
+    return False  # Keine Hinweise gefunden
 
 
 def find_cc_adoption_date(commits, min_cc_percentage=MIN_CC_PERCENTAGE, min_cc_commits=MIN_CC_COMMITS):
@@ -247,7 +271,8 @@ def find_cc_adoption_date(commits, min_cc_percentage=MIN_CC_PERCENTAGE, min_cc_c
         conventional_commits = cum_conventional_commits[total_commits] - cum_conventional_commits[i]
         cc_percentage = conventional_commits / num_remaining_commits
 
-        # Überprüfe, ob sowohl der Mindestprozentsatz als auch die Mindestanzahl an konventionellen Commits erreicht sind
+        # Überprüfe, ob sowohl der Mindestprozentsatz als auch die Mindestanzahl an konventionellen Commits erreicht
+        # sind
         if cc_percentage >= min_cc_percentage and conventional_commits >= min_cc_commits:
             return commits_reversed[i]['committed_datetime'][:10]  # Rückgabe des Datums ab diesem Commit
 

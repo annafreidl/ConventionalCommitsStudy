@@ -47,13 +47,12 @@ def clone_repository(repo):
     if repo_dir.exists():
         print(f"Repository {repo_name} bereits vorhanden.")
         try:
-            repo = Repo(repo_dir)
+            repo_instance = Repo(repo_dir)
             # Optional: Repository aktualisieren
             # repo.remotes.origin.pull()
-            return repo
         except GitCommandError as e:
             print(f"Fehler beim Laden des Repositories {repo_name}: {e}")
-            return None
+            repo_instance = None
     else:
         # Wenn das temporäre Verzeichnis existiert, wurde ein vorheriger Klonvorgang unterbrochen
         if repo_dir_temp.exists():
@@ -62,10 +61,11 @@ def clone_repository(repo):
 
         print(f"Cloning {repo_name} von {repo_url} in {language_dir}")
         try:
-            Repo.clone_from(repo_url, repo_dir_temp, progress=CloneProgress())
+            repo_instance = Repo.clone_from(repo_url, repo_dir_temp, progress=CloneProgress())
             # Benenne das temporäre Verzeichnis in das endgültige Verzeichnis um
             os.rename(repo_dir_temp, repo_dir)
-            return Repo(repo_dir)
+            # Lade das geklonte Repository neu
+            repo_instance = Repo(repo_dir)
         except GitCommandError as e:
             # Fange Git-Fehler ab, wie z.B. deaktivierte Repositories oder Fehler beim Klonen
             print(f"Fehler beim Klonen des Repositories {repo_name}: {e}")
@@ -74,6 +74,33 @@ def clone_repository(repo):
             else:
                 print(f"Ein allgemeiner Git-Fehler ist aufgetreten: {e}")
             return None
+
+        # Wenn das Repository ein Wiki hat, klone das Wiki-Repository
+    if repo.get("has_wiki", False):
+        wiki_url = repo_url.replace(".git", ".wiki.git")
+        wiki_dir = repo_dir / ".wiki"
+
+        if wiki_dir.exists():
+            print(f"Wiki-Repository für {repo_name} bereits vorhanden.")
+            # Optional: Wiki aktualisieren
+            try:
+                wiki_repo = Repo(wiki_dir)
+                # wiki_repo.remotes.origin.pull()
+            except GitCommandError as e:
+                print(f"Fehler beim Laden des Wiki-Repositories für {repo_name}: {e}")
+        else:
+            print(f"Cloning Wiki for {repo_name} von {wiki_url}")
+            try:
+                wiki_repo = Repo.clone_from(wiki_url, wiki_dir)
+            except GitCommandError as e:
+                print(f"Fehler beim Klonen des Wiki-Repositories für {repo_name}: {e}")
+                if "Repository not found" in str(e) or "Repository disabled" in str(e):
+                    print(f"Das Wiki-Repository für {repo_name} ist entweder deaktiviert oder nicht verfügbar.")
+                else:
+                    print(f"Ein allgemeiner Git-Fehler ist aufgetreten: {e}")
+                # Wir fahren fort, auch wenn das Wiki nicht geklont werden konnte
+
+    return repo_instance
 
 
 def delete_temp():
