@@ -95,7 +95,7 @@ def load_commits(repo):
                     current_commit['files_changed'] += files_changed
 
                     if is_bot(author):
-                        logging.info(
+                        logging.debug(
                             f"Überspringe Bot-Commit von {author}: {message}, files_changed: {files_changed}, insertions: {insertions}, deletions: {deletions}")
                         continue
 
@@ -104,5 +104,5 @@ def load_commits(repo):
                     current_commit = None
         return commits
     except GitCommandError as e:
-        print(f"Fehler beim Laden der Commits: {e}")
+        logging.error(f"Fehler beim Laden der Commits: {e}")
         return []

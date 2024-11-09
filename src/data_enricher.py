@@ -1,26 +1,25 @@
-# data_enricher.py
+# Standard library imports
 import logging
 import re
 from collections import Counter
 from typing import List, Dict, Tuple, Any
 
-from data_enricher import *
-from analyzer import find_cc_adoption_date
-from testing import binary_segmentation_date_analysis
+# Local module imports
+from change_point_detection import binary_segmentation_date_analysis
 
 
 def identify_consistent_custom_types(custom_type_counter, total_commits, min_absolute=3, min_percentage=0.00):
     """
-    Identifiziert konsistente Custom Types basierend auf ihrer Häufigkeit.
+    Identifies consistent custom types based on their frequency.
 
     Args:
-        custom_type_counter (Counter): Counter mit der Häufigkeit der Custom Types.
-        total_commits (int): Gesamtzahl der Commits.
-        min_absolute (int): Minimale absolute Häufigkeit. Hier 3
-        min_percentage (float): Minimale prozentuale Häufigkeit (zwischen 0 und 100).
+        custom_type_counter (Counter): Counter with the frequency of custom types.
+        total_commits (int): Total number of commits.
+        min_absolute (int): Minimum absolute frequency (default: 3).
+        min_percentage (float): Minimum percentage frequency (default: 0.00).
 
     Returns:
-        set: Menge der konsistenten Custom Types.
+        set: Set of consistent custom types.
     """
     consistent_custom_types = set()
     for custom_type, count in custom_type_counter.items():
@@ -32,7 +31,7 @@ def identify_consistent_custom_types(custom_type_counter, total_commits, min_abs
 
 def parse_commit_message(message):
     """
-    Parst eine Commit-Nachricht und gibt den Typ, Scope, Breaking-Change-Indikator und Beschreibung zurück.
+    Parses a commit message and returns its type, scope, breaking-change indicator, and description.
     """
     pattern = r"^([a-zA-Z]+)(?:\(([\w\-\.\s]+)\))?(!)?: (.+)"
     match = re.match(pattern, message.lower())
@@ -49,7 +48,7 @@ def parse_commit_message(message):
 
 def is_conventional_commit(commit_message):
     """
-    Prüft, ob eine Commit-Nachricht der CC-Convention entspricht.
+    Checks if a commit message conforms to the Conventional Commit (CC) standard.
     """
     cc_types = ["feat", "fix", "docs", "style", "refactor", "perf",
                 "test", "build", "ci", "chore", "revert"]
@@ -61,7 +60,7 @@ def is_conventional_commit(commit_message):
 
 def is_conventional_custom(commit_message):
     """
-    Prüft, ob eine Commit-Nachricht der CC-Convention mit custom Typen entspricht.
+    Checks if a commit message conforms to the CC standard but uses custom types.
     """
     cc_types = ["feat", "fix", "docs", "style", "refactor", "perf",
                 "test", "build", "ci", "chore", "revert"]
@@ -73,7 +72,7 @@ def is_conventional_custom(commit_message):
 
 def get_commit_type(message):
     """
-    Extrahiert den Commit-Typ aus einer Commit-Nachricht.
+    Extracts the commit type from a commit message.
     """
     parsed = parse_commit_message(message)
     if parsed:
@@ -82,6 +81,9 @@ def get_commit_type(message):
 
 
 def should_analyze_cc_adoption(analysis_summary):
+    """
+    Determines whether the CC adoption date should be analyzed based on summary data.
+    """
     total_commits = analysis_summary.get("total_commits", 0)
     cc_type_commits = analysis_summary.get("cc_type_commits", 0)
 
@@ -90,38 +92,37 @@ def should_analyze_cc_adoption(analysis_summary):
 
     cc_rate = cc_type_commits / total_commits
 
-    if cc_rate >= 0.10 and cc_type_commits >= 500:
-        return True
-    else:
-        return False
+    return cc_rate >= 0.10 or cc_type_commits >= 500
 
 
-def enrich_commits(commits: List[Dict[str, Any]]) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
+def enrich_commits(
+        commits: List[Dict[str, Any]], summary: Dict[str, Any]) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
     """
-    Reicht die Commits mit Metadaten an und erstellt eine Zusammenfassung.
+    Enriches commits with metadata and creates a summary of the data.
 
     Args:
-        commits (List[Dict[str, Any]]): Liste von Commits.
+        commits (List[Dict[str, Any]]): List of commits.
+        summary (Dict[str, Any]): Summary dictionary to be updated.
 
     Returns:
-        Tuple[List[Dict[str, Any]], Dict[str, Any]]: Eine Liste der angereicherten Commits und eine Zusammenfassung.
+        Tuple[List[Dict[str, Any]], Dict[str, Any]]: A list of enriched commits and an updated summary.
     """
     logger = logging.getLogger(__name__)
 
     total_commits = len(commits)
     cc_type_commits = 0
+    custom_type_commits = 0
 
     cc_type_counter = Counter()
-    all_custom_type_counter = Counter()
+    custom_type_counter = Counter()
 
     enriched_commits = []
 
-    logger.debug(f"Starte Anreicherung von {total_commits} Commits.")
+    logging.info(f"Starting enrichment of {total_commits} commits.")
 
     for commit in commits:
         message = commit.get("message", "")
         commit_type = get_commit_type(message)
-
         is_cc = is_conventional_commit(message)
         is_custom = is_conventional_custom(message)
 
@@ -141,38 +142,20 @@ def enrich_commits(commits: List[Dict[str, Any]]) -> Tuple[List[Dict[str, Any]],
             elif is_custom:
                 enriched_commit['is_conventional'] = True
                 enriched_commit['custom_type'] = commit_type
-                all_custom_type_counter[commit_type] += 1
-            # Sonst wird der Commit als unkonventionell betrachtet
-        # Wenn kein Commit-Typ vorhanden ist, wird der Commit als unkonventionell betrachtet
+                custom_type_commits += 1
+                custom_type_counter[commit_type] += 1
+            # Otherwise, the commit is considered unconventional
 
         enriched_commits.append(enriched_commit)
 
-    # Identifizieren der konsistenten Custom-Typen basierend auf dem Schwellenwert
-    consistent_custom_types = identify_consistent_custom_types(all_custom_type_counter, total_commits)
-    logger.debug(f"Konsistente Custom-Typen identifiziert: {consistent_custom_types}")
+    conventional_commits = cc_type_commits + custom_type_commits
+    unconventional_commits = total_commits - conventional_commits
 
-    # Aktualisieren der angereicherten Commits, um inkonsistente Custom-Typen herauszufiltern
-    for commit in enriched_commits:
-        if commit['custom_type'] and commit['custom_type'] not in consistent_custom_types:
-            commit['is_conventional'] = False
-            commit['custom_type'] = None
-
-    # Neu Berechnen der Zähler basierend auf den aktualisierten Commits
-    conventional_commits = 0
-    unconventional_commits = 0
-    custom_type_commits = 0
-    custom_type_counter = Counter()
-
-    for commit in enriched_commits:
-        if commit['is_conventional']:
-            conventional_commits += 1
-            if commit['custom_type']:
-                custom_type_commits += 1
-                custom_type_counter[commit['custom_type']] += 1
-        else:
-            unconventional_commits += 1
+    # Calculate the overall CC adoption rate
+    overall_cc_adoption_rate = (cc_type_commits / total_commits) * 100 if total_commits > 0 else 0
 
     summary = {
+        **summary,
         'total_commits': total_commits,
         'conventional_commits': conventional_commits,
         'unconventional_commits': unconventional_commits,
@@ -180,14 +163,21 @@ def enrich_commits(commits: List[Dict[str, Any]]) -> Tuple[List[Dict[str, Any]],
         'custom_type_commits': custom_type_commits,
         'custom_type_distribution': dict(custom_type_counter),
         'cc_type_distribution': dict(cc_type_counter),
-        'cc_adoption_date': None
+        'overall_cc_adoption_rate': round(overall_cc_adoption_rate),
+        'cc_adoption_date': None,
+        'is_consistently_conventional': False
     }
 
-    if should_analyze_cc_adoption(summary):
-        logger.info("Analysiere CC-Einführungsdatum.")
-        cc_adoption_date = binary_segmentation_date_analysis(enriched_commits, summary)
+    # Determine if the repository is consistently conventional based on the overall adoption rate
+    if overall_cc_adoption_rate >= 80:
+        logger.info("Repository is consistently conventional.")
+        summary['is_consistently_conventional'] = True
+        summary['cc_adoption_date'] = summary.get('created_at')
+    elif should_analyze_cc_adoption(summary):
+        logger.info("Analyzing CC adoption date.")
+        cc_adoption_date = binary_segmentation_date_analysis(enriched_commits)
         summary['cc_adoption_date'] = cc_adoption_date
     else:
-        logger.info("Analyse des CC-Einführungsdatums nicht erforderlich.")
+        logger.info("Criteria for CC adoption date analysis not met.")
 
     return enriched_commits, summary

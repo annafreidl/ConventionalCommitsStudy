@@ -1,6 +1,9 @@
 import logging
+import os
+
 import colorlog as colorlog
 import pandas as pd
+import seaborn as sns
 import statsmodels.api as sm
 from datetime import datetime, timezone, timedelta
 from dateutil import parser
@@ -13,13 +16,23 @@ from datetime import datetime
 from collections import Counter
 
 from analyzer import aggregate_commit_types
-from data_saver import load_dataset, load_analysis_summaries, load_from_json
+from constants import PLOTS
+from data_saver import load_analysis_summaries, load_from_json
+from dataset import load_dataset
+from process_repository import process_repository
 
 COUNTER_LEVEL = 25
 FILE = Path(__file__).resolve()
 ROOT = FILE.parents[0]
-RESULTS = ROOT / "results" / "commit_messages"
-YAML = ROOT / "data" / "test.yaml"
+RESULTS = ROOT / r"results" / r"commit_messages"
+YAML = ROOT / "data" / "dataset.yaml"
+
+plt.rcParams.update({
+    "pgf.texsystem": "pdflatex",  # LaTeX engine
+    'font.family': 'serif',  # Use serif fonts
+    'text.usetex': True,  # Use LaTeX for all text
+    'pgf.rcfonts': False,  # Disable Matplotlib RC fonts
+})
 
 
 # RQ1: Analysing the consistency of CC applications and the distribution and frequency
@@ -128,14 +141,16 @@ def calculate_adoption_rate_by_language(summaries):
         print(f"  Adoptionsrate: {rate:.2f}%")
         print('-' * 40)
 
-    plot_adoption_rate_by_language(adoption_rates)
+    sorted_adoption_rates = dict(sorted(adoption_rates.items(), key=lambda item: item[1], reverse=True))
+
+    plot_adoption_rate_by_language(sorted_adoption_rates)
 
     return adoption_rates
 
 
 def plot_adoption_rate_by_language(adoption_rates):
     languages = list(adoption_rates.keys())
-    rates = [adoption_rates[lang] * 100 for lang in languages]
+    rates = [adoption_rates[lang] for lang in languages]
 
     plt.figure(figsize=(12, 6))
     bars = plt.bar(languages, rates, color='skyblue')
@@ -154,7 +169,7 @@ def plot_adoption_rate_by_language(adoption_rates):
     plt.show()
 
 
-def calculate_adoption_rate_by_size(summaries):
+def calculate_adoption_rate_by_size(summaries, file_path):
     # Collect sizes from summaries
     sizes = [s.get('size', 0) for s in summaries]
     sizes = sorted(sizes)
@@ -209,7 +224,7 @@ def calculate_adoption_rate_by_size(summaries):
     perform_logistic_regression(summaries, size_categories)
 
     # Plot the adoption rates with error bars
-    plot_adoption_rate_by_size(adoption_rates, standard_errors)
+    plot_adoption_rate_by_size(adoption_rates, standard_errors, file_path)
 
     return adoption_rates, size_stats
 
@@ -263,13 +278,12 @@ def perform_logistic_regression(summaries, size_categories):
     print('-' * 40)
 
 
-def plot_adoption_rate_by_size(adoption_rates, standard_errors):
+def plot_adoption_rate_by_size(adoption_rates, file_path):
     categories = list(adoption_rates.keys())
     rates = [adoption_rates[cat] for cat in categories]
-    errors = [standard_errors[cat] for cat in categories]
 
-    plt.figure(figsize=(12, 8))
-    bars = plt.bar(categories, rates, yerr=errors, capsize=5, color='skyblue', edgecolor='black')
+    plt.figure(figsize=(6.202, 4.652))
+    bars = plt.barplot(categories, rates, capsize=5, color='skyblue', edgecolor='black')
     plt.xlabel('Projektgröße Kategorie (Quartile)')
     plt.ylabel('Adoptionsrate (%)')
     plt.title('Adoptionsrate von Conventional Commits nach Projektgröße')
@@ -281,12 +295,11 @@ def plot_adoption_rate_by_size(adoption_rates, standard_errors):
         plt.text(bar.get_x() + bar.get_width() / 2.0, height, f'{rate:.1f}%', ha='center', va='bottom')
 
     plt.tight_layout()
+    plt.savefig(PLOTS / file_path)
     plt.show()
-    # Optional: Speichern der Grafik
-    # plt.savefig('adoption_rate_by_project_size.png')
 
 
-def calculate_adoption_rate_by_project_type(summaries):
+def calculate_adoption_rate_by_project_type(summaries, file_path):
     # Initialize statistics dictionary
     owner_stats = defaultdict(lambda: {'total_repos': 0, 'adopted_repos': 0})
 
@@ -315,26 +328,45 @@ def calculate_adoption_rate_by_project_type(summaries):
         print('-' * 40)
 
     # Plot the adoption rates
-    plot_adoption_rate_by_project_type(adoption_rates)
+    plot_adoption_rate_by_project_type(adoption_rates, file_path)
 
 
-def plot_adoption_rate_by_project_type(adoption_rates):
-    owner_types = list(adoption_rates.keys())
-    rates = [adoption_rates[owner] for owner in owner_types]
+def plot_adoption_rate_by_project_type(adoption_rates, file_path):
+    project_owner_types = list(adoption_rates.keys())
+    rates = [adoption_rates[owner] for owner in project_owner_types]
 
-    plt.figure(figsize=(8, 6))
-    bars = plt.bar(owner_types, rates, color='skyblue')
-    plt.xlabel('Project Owner Type')
-    plt.ylabel('Adoption Rate (%)')
-    plt.title('Adoption Rate of Conventional Commits by Project Type')
+    data = pd.DataFrame({
+        'Project Owner Type': project_owner_types,
+        'Adoption Rate (%)': rates
+    })
+
+    # Adjust font settings for LaTeX compatibility
+    plt.rc('font', size=10)  # Standard font size
+    plt.rc('axes', titlesize=12)  # Title font size
+    plt.rc('axes', labelsize=10)  # Axis labels font size
+    plt.rc('xtick', labelsize=8)  # X-axis tick labels font size
+    plt.rc('ytick', labelsize=8)  # Y-axis tick labels font size
+    plt.rc('legend', fontsize=8)  # Legend font size
+    plt.rc('font', family='serif')  # Use a serif font for LaTeX compatibility
+
+    plt.figure(figsize=(3.101, 2.326))
+    ax = sns.barplot(x='Project Owner Type', y='Adoption Rate (%)', data=data, color='skyblue', ci=None)
+    ax.set_xlabel('')
+    ax.set_ylabel('')
+    plt.ylim(0, max(rates) + 5)
 
     # Display percentage values above bars
-    for bar in bars:
-        height = bar.get_height()
-        plt.text(bar.get_x() + bar.get_width() / 2.0, height + 0.5, f'{height:.1f}%', ha='center', va='bottom')
+    for p in ax.patches:
+        height = p.get_height()
+        ax.text(
+            p.get_x() + p.get_width() / 2.,
+            height + 0.5,
+            '{:1.1f}%'.format(height),
+            ha='center', va='bottom'
+        )
 
     plt.tight_layout()
-    plt.savefig(ROOT / "results" / "diagrams" / 'adoption_rate_by_project_type.png')
+    plt.savefig(PLOTS / file_path)
     plt.show()
 
 
@@ -352,19 +384,26 @@ def clean_date_string(date_str):
     return date_str
 
 
-def calculate_adoption_rate_by_age(summaries):
+def calculate_adoption_rate_by_age(summaries, file_path):
+    """
+    Calculates the adoption rate of Conventional Commits by project age category and plots a bar chart.
+
+    Parameters:
+    - summaries (list of dict): List containing repository summaries with 'created_at' and 'cc_adoption_date' fields.
+    - file_path (str): Path (including filename) to save the generated plot.
+    """
     current_date = datetime.now(timezone.utc)
-    # Calculate ages in years
     ages = []
-    for s in summaries:
-        created_at_str = s.get('created_at', '')
+    data = []
+
+    # Calculate ages of repositories and collect them
+    for summary in summaries:
+        created_at_str = summary.get('created_at', '')
         if not created_at_str:
             continue
-        # Clean the date string
         created_at_str = clean_date_string(created_at_str)
         try:
             created_at = parser.parse(created_at_str)
-            # Ensure created_at is timezone-aware and in UTC
             if created_at.tzinfo is None:
                 created_at = created_at.replace(tzinfo=timezone.utc)
             else:
@@ -372,26 +411,25 @@ def calculate_adoption_rate_by_age(summaries):
         except (ValueError, OverflowError) as e:
             print(f"Error parsing date '{created_at_str}': {e}")
             continue
-        age = (current_date - created_at).days / 365.25  # Convert days to years
+        age = (current_date - created_at).days / 365.25  # Age in years
         ages.append(age)
 
     if not ages:
-        print("No valid ages to process.")
+        print("No valid age data to process.")
         return
 
     ages = sorted(ages)
 
-    # Determine quartiles for age categories
-    q1 = np.percentile(ages, 25)
-    q2 = np.percentile(ages, 50)
-    q3 = np.percentile(ages, 75)
+    # Determine quintiles for age categories
+    quintiles = np.percentile(ages, [20, 40, 60, 80])
 
     # Define age categories with age ranges
     age_categories = {
-        'New': {'min_age': 0, 'max_age': q1},
-        'Middle-aged': {'min_age': q1, 'max_age': q2},
-        'Old': {'min_age': q2, 'max_age': q3},
-        'Very Old': {'min_age': q3, 'max_age': max(ages)}
+        'New': {'min_age': 0, 'max_age': quintiles[0]},
+        'Recent': {'min_age': quintiles[0], 'max_age': quintiles[1]},
+        'Intermediate': {'min_age': quintiles[1], 'max_age': quintiles[2]},
+        'Mature': {'min_age': quintiles[2], 'max_age': quintiles[3]},
+        'Established': {'min_age': quintiles[3], 'max_age': max(ages)}
     }
 
     # Calculate date ranges for each category
@@ -410,10 +448,7 @@ def calculate_adoption_rate_by_age(summaries):
 
         category_date_ranges[category] = {'min_date': min_date_str, 'max_date': max_date_str}
 
-    # Initialize statistics
-    age_stats = {k: {'total_repos': 0, 'adopted_repos': 0} for k in age_categories}
-
-    # Assign repositories to age categories
+    # Assign repositories to age categories and collect data for the bar plot
     for summary in summaries:
         created_at_str = summary.get('created_at', '')
         if not created_at_str:
@@ -430,60 +465,84 @@ def calculate_adoption_rate_by_age(summaries):
             continue
         age = (current_date - created_at).days / 365.25
         adopted = summary.get('cc_adoption_date') is not None
-        for category, bounds in age_categories.items():
+        category = None
+        for cat, bounds in age_categories.items():
             if bounds['min_age'] <= age <= bounds['max_age']:
-                age_stats[category]['total_repos'] += 1
-                if adopted:
-                    age_stats[category]['adopted_repos'] += 1
+                category = cat
                 break
+        if category:
+            data.append({
+                'Category': category,
+                'Adopted': 'Adopted' if adopted else 'Not Adopted'
+            })
 
-    # Calculate adoption rates
-    adoption_rates = {}
-    for category, stats in age_stats.items():
-        total_repos = stats['total_repos']
-        adopted_repos = stats['adopted_repos']
-        adoption_rate = (adopted_repos / total_repos * 100) if total_repos > 0 else 0
-        adoption_rates[category] = adoption_rate
+    df = pd.DataFrame(data)
 
-    # Print results with date ranges
-    for category in age_categories:
-        rate = adoption_rates[category]
-        stats = age_stats[category]
+    if df.empty:
+        print("No data available for plotting.")
+        return
+
+    # Create labels with date ranges
+    def create_label(category):
         date_range = category_date_ranges[category]
-        print(f"Age Category: {category} ({date_range['min_date']} to {date_range['max_date']})")
-        print(f"  Total Repositories: {stats['total_repos']}")
-        print(f"  Repositories with CC Adoption: {stats['adopted_repos']}")
-        print(f"  Adoption Rate: {rate:.2f}%")
-        print('-' * 60)
+        return f"{category}\n({date_range['min_date']} \n- {date_range['max_date']})"
 
-    # Plot the adoption rates
-    plot_adoption_rate_by_age(adoption_rates, category_date_ranges)
+    df['Category with Date'] = df['Category'].apply(create_label)
 
+    # Define the order of categories
+    category_order = ['New', 'Recent', 'Intermediate', 'Mature', 'Established']
+    ordered_labels = [create_label(cat) for cat in category_order]
 
-def plot_adoption_rate_by_age(adoption_rates, category_date_ranges):
-    categories = list(adoption_rates.keys())
-    rates = [adoption_rates[cat] for cat in categories]
+    # Calculate Adoption Rates
+    adoption_rates = df.groupby('Category with Date')['Adopted'].value_counts().unstack().fillna(0)
+    adoption_rates['Adoption Rate (%)'] = (adoption_rates.get('Adopted', 0) /
+                                           (adoption_rates.get('Adopted', 0) + adoption_rates.get('Not Adopted',
+                                                                                                  0))) * 100
+    adoption_rates = adoption_rates.reset_index()
 
-    # Create labels that include date ranges
-    labels = []
-    for category in categories:
-        date_range = category_date_ranges[category]
-        label = f"{category}\n({date_range['min_date']} to {date_range['max_date']})"
-        labels.append(label)
+    # Create the Bar Plot with Seaborn
+    plt.figure(figsize=(6.202, 4.652))  # Increased figure size for better readability
+    bar_plot = sns.barplot(
+        x='Category with Date',
+        y='Adoption Rate (%)',
+        data=adoption_rates,
+        order=ordered_labels,
+        palette='Blues_d'
+    )
 
-    plt.figure(figsize=(12, 6))
-    bars = plt.bar(labels, rates, color='skyblue')
-    plt.xlabel('Project Age Category')
-    plt.ylabel('Adoption Rate (%)')
-    plt.title('Adoption Rate of Conventional Commits by Project Age')
+    # Adjust font settings for LaTeX compatibility
+    plt.rc('font', size=10)  # Standard font size
+    plt.rc('axes', titlesize=12)  # Title font size
+    plt.rc('axes', labelsize=10)  # Axis labels font size
+    plt.rc('xtick', labelsize=8)  # X-axis tick labels font size
+    plt.rc('ytick', labelsize=8)  # Y-axis tick labels font size
+    plt.rc('legend', fontsize=8)  # Legend font size
+    plt.rc('font', family='serif')  # Use a serif font for LaTeX compatibility
 
-    # Display percentage values above bars
-    for bar in bars:
-        height = bar.get_height()
-        plt.text(bar.get_x() + bar.get_width() / 2.0, height + 0.5, f'{height:.1f}%', ha='center', va='bottom')
+    # plt.xlabel('Project Age Category', fontsize=14)  # Increased font size for x-axis label
+    # plt.ylabel('Adoption Rate (%)', fontsize=14)     # Increased font size for y-axis label
+    # plt.title('Application Trend of CC by Project Age', fontsize=16)  # Increased font size for title
 
+    # Correctly display percentage values above the bars
+    for p in bar_plot.patches:
+        height = p.get_height()
+        bar_plot.annotate(
+            f"{height:.2f}%",
+            (p.get_x() + p.get_width() / 2., height + 1),  # Position slightly above the bar
+            ha='center',
+            va='bottom',  # Increased font size for annotations
+            color='black'
+        )
+        # Increased font size for y-axis tick labels
+    max_y_value = adoption_rates['Adoption Rate (%)'].max()
+    plt.ylim(0, max_y_value * 1.1)
     plt.tight_layout()
-    plt.savefig(ROOT / "results" / "diagrams" / 'adoption_rate_by_project_age.png')
+
+    bar_plot.set_xlabel('')
+    bar_plot.set_ylabel('')
+
+    # Save and display the plot
+    plt.savefig(PLOTS / file_path)
     plt.show()
 
 
@@ -529,12 +588,12 @@ def analyze_contributor_consistency(summaries, results_dir):
 
     # Iterate over repositories
     for summary in summaries:
-        repo_name = summary.get('repo_name')
+        repo_id = summary.get('id')
         cc_adoption_date_str = summary.get('cc_adoption_date')
         language = summary.get('language', 'Unknown')
 
         # Load commit data
-        json_file_path = Path(results_dir) / f"{repo_name}_commit_messages.json"
+        json_file_path = RESULTS / f"{repo_id}.json"
         if not json_file_path.exists():
             continue  # Skip if commit data is not available
 
@@ -579,10 +638,12 @@ def analyze_contributor_consistency(summaries, results_dir):
 
     # After processing all repositories, compute overall CC usage rates
     # and plot the aggregated data
-    plot_overall_contributor_cc_usage(overall_cc_usage, contributor_categories_set, total_commits_per_contributor_type, total_commits_all)
+    plot_overall_contributor_cc_usage(overall_cc_usage, contributor_categories_set, total_commits_per_contributor_type,
+                                      total_commits_all)
 
 
-def plot_overall_contributor_cc_usage(overall_cc_usage, contributor_categories_set, total_commits_per_contributor_type, total_commits_all):
+def plot_overall_contributor_cc_usage(overall_cc_usage, contributor_categories_set, total_commits_per_contributor_type,
+                                      total_commits_all):
     categories = list(contributor_categories_set)
     periods = ['Before CC Adoption', 'After CC Adoption']
     usage_rates = {period: [] for period in periods}
@@ -605,8 +666,8 @@ def plot_overall_contributor_cc_usage(overall_cc_usage, contributor_categories_s
 
     fig, ax1 = plt.subplots(figsize=(12, 6))
 
-    rects1 = ax1.bar(x - width/2, usage_rates['Before CC Adoption'], width, label='Before CC Adoption')
-    rects2 = ax1.bar(x + width/2, usage_rates['After CC Adoption'], width, label='After CC Adoption')
+    rects1 = ax1.bar(x - width / 2, usage_rates['Before CC Adoption'], width, label='Before CC Adoption')
+    rects2 = ax1.bar(x + width / 2, usage_rates['After CC Adoption'], width, label='After CC Adoption')
 
     ax1.set_ylabel('CC Usage Rate (%)')
     ax1.set_xlabel('Contributor Type')
@@ -640,7 +701,7 @@ def plot_overall_contributor_cc_usage(overall_cc_usage, contributor_categories_s
                      ha='center', va='top', fontsize=9, color='blue')  # Adjust vertical alignment
 
     fig.tight_layout()
-    plt.savefig(ROOT / "results" / "diagrams" / 'cc_usage_by_contributor_overall.png')
+    plt.savefig(PLOTS/ 'cc_usage_by_contributor_overall.png')
     plt.show()
 
 
@@ -662,39 +723,106 @@ def plot_contributor_distribution(contributor_counts, repo_name, period):
     plt.show()
 
 
+def aggregate_commit_types_by_language(summaries, string):
+    language_type_distribution = defaultdict(lambda: Counter())
+
+    for summary in summaries:
+        language = summary.get('language', 'Unknown')
+        type_distribution = summary.get(string, {})
+        language_type_distribution[language].update(type_distribution)
+
+    # For each language, plot the distribution
+    for language, type_counter in language_type_distribution.items():
+        print(f"Commit Type Distribution for {language}:")
+        for ctype, count in type_counter.items():
+            print(f"{ctype}: {count}")
+
+        plot_commit_type_distribution(type_counter, language, string)
+
+
+def plot_commit_type_distribution(type_counter, language, string):
+    # Sort the types by frequency
+    types = list(type_counter.keys())
+    counts = [type_counter[ctype] for ctype in types]
+    data = sorted(zip(counts, types), reverse=True)
+    counts_sorted, types_sorted = zip(*data[:30])  # Limit to top 30 types
+
+    plt.figure(figsize=(10, 6))
+    bars = plt.bar(types_sorted, counts_sorted, color='purple')
+    plt.xlabel('Commit Type')
+    plt.ylabel('Count')
+    plt.title(f'Commit Type Distribution for {language}')
+    plt.xticks(rotation=45)
+
+    for bar in bars:
+        yval = bar.get_height()
+        plt.text(bar.get_x() + bar.get_width() / 2, yval, int(yval), ha='center', va='bottom', fontsize=7)
+
+    plt.tight_layout()
+    plt.savefig(ROOT / "results" / "diagrams" / f'{language}_{string}.png')
+    plt.show()
+
+
 if __name__ == "__main__":
     logger = set_logging()
 
     RESULTS.mkdir(exist_ok=True)
-    repos = load_dataset(YAML)
+    logging.info(f"Lade Daten aus {YAML}")
+    repos = load_dataset()
+    logging.info(f"Daten geladen: {len(repos)} Repositories")
 
-    i = 0
-
+    # i = 0
+    #
     # for repo_data in repos:
     #     i += 1
     #     process_repository(repo_data, RESULTS)
     #     logger.counter(f"Processed {i} repos")
-    #
-    #
 
     # Laden der Zusammenfassungen
+    logging.info(f"Lade Zusammenfassungen aus {RESULTS}")
     summaries = load_analysis_summaries(RESULTS)
+    logging.info(f"Anzahl der analysierten Repos: {len(summaries)}")
 
+    logging.info(f"Extrahiere CC-Summaries")
     summaries_adopted = [s for s in summaries if s.get('cc_adoption_date') is not None]
+    summaries_consistent = [s for s in summaries if s.get("is_consistently_conventional")]
+    summaries_only_adopted = [s for s in summaries if
+                              s.get('cc_adoption_date') is not None and not s.get("is_consistently_conventional")]
+    logging.info(f"Anzahl der Repos mit CC-Adoption und konsistentem CC-Verhalten: {len(summaries_consistent)}")
+    logging.info(f"Anzahl der Repos mit CC-Adoption: {len(summaries_adopted)}")
+    logging.info(
+        f"Anzahl der Repos mit CC-Adoption, aber nicht konsistentem CC-Verhalten: {len(summaries_only_adopted)}")
+
+    # Data for the pie chart
+    labels = ['Overall CC-Consistent', 'CC-Adoption', 'No Adoption']
+    sizes = [len(summaries_consistent), len(summaries_only_adopted), len(summaries) - len(summaries_adopted)]
+    colors = ['#ff9999', '#66b3ff', '#99ff99']
+
+    plt.figure(figsize=(8, 6))
+    plt.pie(sizes, labels=labels, colors=colors,
+            autopct='%1.1f%%')
+    plt.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
+
+    plt.title('Adoption Status Distribution')
+    plt.show()
 
     # TODO:  1.1 Overall Adoption Rate - Alle Repos
     # Berechnung der Adoptionsrate
+    logging.info(f"Berechne Adoptionsrate")
     calculate_adoption_rate(summaries)
 
     # 1.1.1 Adoption Rate by Programming Language
+    logging.info(f"Berechne Adoptionsrate nach Programmiersprache")
     calculate_adoption_rate_by_language(summaries)
 
     # 1.1.2 Adoption Rate by Project Size
+    logging.info(f"Berechne Adoptionsrate nach Projektgröße")
     calculate_adoption_rate_by_size(summaries)
 
     # 1.1.3 Adoption Rate by Community Activity ???
 
     # 1.1.4 Adoption Rate by Project Age
+    logging.info(f"Berechne Adoptionsrate nach Projektalter")
     calculate_adoption_rate_by_age(summaries)
 
     # 1.1.5 Adoption Rate by Project Type
@@ -714,16 +842,19 @@ if __name__ == "__main__":
 
     # 1.2.2 Consistency über die Zeit - mal schauen
 
-# Ergebnis z.B.
-# Nach der Adoption von CC nutzen zu 90% Core Developers CC,
-# One-time Contributors nutzen nur in 10% der Fälle CC
+    # Ergebnis z.B.
+    # Nach der Adoption von CC nutzen zu 90% Core Developers CC,
+    # One-time Contributors nutzen nur in 10% der Fälle CC
 
-# TODO 1.3 Commit Type Distribution - nur auf Repos mit CC anwenden
-# 1.3.1 Commit Type Distribution -- CC-Types
-# - total
+    # TODO 1.3 Commit Type Distribution - nur auf Repos mit CC anwenden
+    # 1.3.1 Commit Type Distribution -- CC-Types
+    # - total
     aggregate_commit_types(summaries_adopted, 'cc_type_distribution')
     aggregate_commit_types(summaries_adopted, 'custom_type_distribution')
-# - by Programming Language
+    # - by Programming Language
+    aggregate_commit_types_by_language(summaries_adopted, 'cc_type_distribution')
+    aggregate_commit_types_by_language(summaries_adopted, 'custom_type_distribution')
+
 # - by Contributor Type
 # 1.3.2 Commit Type Distribution -- Custom-Types
 # - total - manuelle Auswertung der ersten ... types

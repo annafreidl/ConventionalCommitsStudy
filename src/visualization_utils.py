@@ -1,16 +1,8 @@
-import json
-import logging
-from collections import defaultdict
-from pathlib import Path
-from typing import List, Optional, Dict
 
-import matplotlib.pyplot as plt
-import seaborn as sns
+from typing import List, Optional, Dict
 import numpy as np
 import pandas as pd
-
 from constants import ROOT
-from data_saver import load_classifications
 
 
 def visualize_repo_commits(enriched_commits, summary, repo_name):
@@ -221,6 +213,86 @@ def plot_classification_by_language(classification_file, output_dir):
         output_file = output_dir / f"classification_{safe_language_name}.png"  # .pdf
         plt.savefig(output_file)
         plt.close()
+
+import json
+from collections import defaultdict
+import matplotlib.pyplot as plt
+from pathlib import Path
+
+import json
+from collections import defaultdict
+import matplotlib.pyplot as plt
+from pathlib import Path
+
+def plot_complete_classification(classification_file, output_dir):
+    """
+    Liest den Klassifikationsindex ein und erstellt ein Tortendiagramm, das die gesamte Klassifizierung
+    aller Repositories über alle Programmiersprachen hinweg anzeigt.
+
+    Args:
+        classification_file (Path): Pfad zur JSON-Datei mit den Klassifikationen.
+        output_dir (Path): Verzeichnis, in dem das Diagramm gespeichert werden soll.
+    """
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    # Lade die Klassifikationen
+    with open(classification_file, 'r', encoding='utf-8') as f:
+        classifications = json.load(f)
+
+    # Zähle die Anzahl der Repositories pro Klassifikation für alle Sprachen
+    classification_counts = defaultdict(int)
+    for repos in classifications.values():
+        for classification in repos.values():
+            classification_counts[classification] += 1
+
+    # Sortiere die Klassifikationen nach Anzahl absteigend
+    classifications_sorted = dict(sorted(classification_counts.items(), key=lambda item: item[1], reverse=True))
+
+    classifications_list = list(classifications_sorted.keys())
+    counts = list(classifications_sorted.values())
+
+    # Mappe deutsche Klassifikationen zu englischen Äquivalenten
+    classification_mapping = {
+        'nutzen CC und als Vorgabe erkennbar': 'Using CC with Explicit Indications',
+        'nutzen CC, aber nicht als Vorgabe erkennbar': 'Using CC without Explicit Indications',
+        'Erwaehnung von CC, aber wird nicht genutzt': 'Mentions CC but Not Using It',
+        'nicht conventional': 'Not Conventional',
+        'nicht eindeutig klassifizierbar': 'Not Clearly Classifiable'
+    }
+    classifications_list_english = [classification_mapping.get(cl, cl) for cl in classifications_list]
+
+    # Erstelle das Tortendiagramm
+    plt.figure(figsize=(8, 8))
+    colors = plt.get_cmap('Set3').colors  # Verwende eine angenehme Farbpalette
+
+    # Erstelle das Tortendiagramm ohne Labels, um Überlappungen zu vermeiden
+    wedges, _ = plt.pie(
+        counts,
+        startangle=90,
+        colors=colors[:len(counts)],
+        wedgeprops={'edgecolor': 'white'}
+    )
+
+    # Füge eine Legende hinzu
+    plt.legend(
+        wedges,
+        classifications_list_english,
+        title="Classifications",
+        loc="center left",
+        bbox_to_anchor=(1, 0, 0.5, 1),
+        fontsize=12
+    )
+
+    plt.title('Overall Repository Classifications', fontsize=16)
+    plt.axis('equal')  # Stellt sicher, dass das Diagramm als Kreis gezeichnet wird
+
+    # Diagramm speichern
+    output_file = output_dir / "complete_classification.svg"
+    plt.tight_layout()
+    plt.savefig(output_file, dpi=300, bbox_inches='tight')  # Passt das Bild an, um die Legende einzuschließen
+    plt.close()
+
+
 
 
 def plot_cc_consistency_per_language(analysis_by_language, output_dir):
@@ -568,7 +640,7 @@ def plot_size_vs_cc_usage_stripplot(
 
 # if __name__ == "__main__":
 # Pfade zu deinen Daten
-# RESULTS_DIR = ROOT / "results" / "commit_messages"  # Ersetze durch deinen tatsächlichen Pfad
+# RESULTS_DIR = ROOT / "results" / "commit_messages_alt"  # Ersetze durch deinen tatsächlichen Pfad
 # classification_file = ROOT / "results" / "repository_classifications.json"
 # OUTPUT_DIR = ROOT / "results"  # Ersetze durch dein gewünschtes Ausgabeverzeichnis
 #

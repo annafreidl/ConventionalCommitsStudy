@@ -1,12 +1,15 @@
 # data_saver.py
 import json
+import logging
 import os
 
 import yaml
 from pathlib import Path
 
+from constants import DATA
 
-def save_to_json(enriched_commits, summary, repo_name, results_dir):
+
+def save_to_json(enriched_commits, summary, file_path):
     """
     Speichert die angereicherten Commits und die Zusammenfassung als JSON.
 
@@ -19,7 +22,6 @@ def save_to_json(enriched_commits, summary, repo_name, results_dir):
     Returns:
         Path: Pfad zur gespeicherten JSON-Datei.
     """
-    file_path = Path(results_dir) / f"{repo_name}_commit_messages.json"
     json_data = {
         "commits": enriched_commits,
         "custom_types": list(summary['custom_type_distribution'].keys()),
@@ -30,6 +32,19 @@ def save_to_json(enriched_commits, summary, repo_name, results_dir):
         json.dump(json_data, f, indent=2)
     return file_path
 
+def load_repository_data(json_file_path):
+    with open(json_file_path, 'r') as file:
+        data = json.load(file)
+    return data
+
+def load_all_repositories_data(json_directory_path):
+    repository_data_list = []
+    for filename in os.listdir(json_directory_path):
+        if filename.endswith('.json'):
+            json_file_path = os.path.join(json_directory_path, filename)
+            repo_data = load_repository_data(json_file_path)
+            repository_data_list.append(repo_data)
+    return repository_data_list
 
 def load_from_json(file_path):
     """
@@ -44,45 +59,6 @@ def load_from_json(file_path):
     with open(file_path, 'r', encoding='utf-8') as file:
         data = json.load(file)
     return data
-
-
-def load_dataset(yaml_path):
-    json_path = Path(yaml_path).with_suffix('.json')
-
-    if not json_path.exists():
-
-        with open(yaml_path, "r", encoding='utf-8') as file:
-            data = yaml.safe_load(file)
-
-        extracted_data = [
-            {"id": d["id"],
-             "name": d["name"],
-             "clone_url": d["clone_url"],
-             "language": d["language"],
-             "size": d["size"],
-             "owner": d["owner"].get("type"),
-             "homepage": d.get("homepage", ""),
-             "default_branch": d["default_branch"],
-             "pushed_at": d["pushed_at"].isoformat() + 'Z',
-             "created_at": d["created_at"].isoformat() + 'Z',
-             "updated_at": d["updated_at"].isoformat() + 'Z',
-             "archived": d["archived"],
-             "forks_count": d["forks_count"],
-             "stargazers_count": d["stargazers_count"],
-             "has_wiki": d["has_wiki"]
-             }
-            for d in data if "name" in d and "clone_url" in d and "language" in d
-        ]
-
-        with open(json_path, "w", encoding='utf-8') as file:
-            json.dump(extracted_data, file, indent=4)
-
-        print("Loaded dataset from YAML file")
-    else:
-        with open(json_path, "r") as file:
-            extracted_data = json.load(file)
-
-    return extracted_data
 
 
 def load_classifications(classification_file):
@@ -105,6 +81,7 @@ def load_analysis_summaries(results_dir):
     for filename in os.listdir(results_dir):
         filepath = os.path.join(results_dir, filename)
         with open(filepath, 'r') as f:
+            # logging.info(f"Loading summary from {filepath}")
             data = json.load(f)
             repo_name = filename.replace('_commit_messages.json', '')
             summary = data.get('analysis_summary', {})
