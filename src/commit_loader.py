@@ -5,6 +5,7 @@ import re
 from git import GitCommandError
 import datetime
 
+
 # Running BIMAN https://github.com/ssc-oscar/BIMAN_bot_detection
 # Running BIN (name based detection) approach:
 def is_bot(author_name):
@@ -96,7 +97,8 @@ def load_commits(repo):
 
                     if is_bot(author):
                         logging.debug(
-                            f"Überspringe Bot-Commit von {author}: {message}, files_changed: {files_changed}, insertions: {insertions}, deletions: {deletions}")
+                            f"Überspringe Bot-Commit von {author}: {message}, files_changed: {files_changed},"
+                            f"insertions: {insertions}, deletions: {deletions}")
                         continue
 
                     if current_commit['files_changed'] > 0:

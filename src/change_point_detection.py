@@ -1,17 +1,15 @@
 # Standard library imports
 import logging
-from pathlib import Path
 
 # Third-party library imports
 import matplotlib.pyplot as plt
 import numpy as np
 import ruptures as rpt
 import seaborn as sns
-
 from matplotlib.colors import ListedColormap
 
 # Local module imports
-from constants import MIN_CC_RATE, MIN_COMMITS_AFTER_CP, PLOTS, ROOT
+from constants import MIN_CC_RATE, MIN_COMMITS_AFTER_CP, PLOTS
 
 
 def plot_heatmap(sequence, change_point_index, adoption_date, repo_name):
@@ -21,13 +19,11 @@ def plot_heatmap(sequence, change_point_index, adoption_date, repo_name):
     # 1. Prepare data for the heatmap
     heatmap_data = np.array(sequence).reshape(-1, 1)
     sequence_size = len(sequence)
-    new_sequence = sequence[change_point_index:]
-    count_ones = sum(new_sequence)
     custom_cmap = ListedColormap(['#ffffff', '#121212'])
 
     # 2. Plot the heatmap
     plt.figure(figsize=(6.202, 3.500))
-    ax = sns.heatmap(heatmap_data.T, cmap=custom_cmap, cbar=False, linecolor='black')
+    sns.heatmap(heatmap_data.T, cmap=custom_cmap, cbar=False, linecolor='black')
 
     # 3. Mark the change point
     plt.axvline(x=change_point_index, color='red', linestyle='-', linewidth=2, label='Change Point')
@@ -36,9 +32,7 @@ def plot_heatmap(sequence, change_point_index, adoption_date, repo_name):
     plt.annotate(
         f'Adoption Date\n{adoption_date}',
         xy=(change_point_index, 0),
-        xycoords=('data', 'axes fraction'),
         xytext=(change_point_index + sequence_size * 0.03, 0.6),
-        textcoords=('data', 'axes fraction'),
         fontsize=10,
         color='black',
         bbox=dict(boxstyle='round,pad=0.5', fc='white', ec='black')
@@ -46,33 +40,11 @@ def plot_heatmap(sequence, change_point_index, adoption_date, repo_name):
 
     # 5. Save and format the plot
     save_path = f"{PLOTS}/{repo_name}_heatmap.pdf"
-    #plt.title('Conventional Commits Adoption Heatmap', fontsize=14, pad=20)
-    #plt.xlabel('Commit Index', fontsize=12)
-    #plt.ylabel('CC Compliance', fontsize=12)
+    # plt.title('Conventional Commits Adoption Heatmap', fontsize=14, pad=20)
+    # plt.xlabel('Commit Index', fontsize=12)
+    # plt.ylabel('CC Compliance', fontsize=12)
     plt.yticks([0, 1], ['CC', 'Non-CC'])
     plt.savefig(save_path)
-    plt.close()
-
-
-def plot_heatmap_not_cc(sequence, repo_name):
-    """
-    Generates a heatmap for repositories without consistent Conventional Commits adoption.
-    """
-    # Prepare data for heatmap
-    heatmap_data = np.array(sequence).reshape(-1, 1)
-    custom_cmap = ListedColormap(['#ffffff', '#A9A9A9'])
-
-    # Plot the heatmap
-    plt.figure(figsize=(12, 6))
-    ax = sns.heatmap(heatmap_data.T, cmap=custom_cmap, cbar=False, linecolor='gray')
-
-    # Save and format the plot
-    save_path = f"{ROOT}/results/manual/{repo_name}_heatmap.pdf"
-    plt.title('Conventional Commits Adoption Heatmap', fontsize=14, pad=20)
-    plt.xlabel('Commit Index', fontsize=12)
-    plt.ylabel('CC Compliance', fontsize=12)
-    plt.yticks([0, 1], ['CC', 'Non-CC'])
-    plt.savefig(save_path, dpi=300)
     plt.close()
 
 
@@ -123,7 +95,7 @@ def binary_segmentation_date_analysis(enriched_commits):
         if is_repository_conventional_after_cp(commit_sequence_after_cp):
             change_point_commit = commits_reversed[change_point_index]
             adoption_date = change_point_commit.get('committed_datetime')[:10]
-            plot_heatmap(commit_sequence, change_point_index, adoption_date, 'AUTOGPT')
+            # Debugging:plot_heatmap(commit_sequence, change_point_index, adoption_date, 'AUTOGPT')
             logging.info(f"CC usage became consistent from {adoption_date}.")
             return adoption_date
         else:

@@ -2,7 +2,7 @@ from constants import COMMIT_ANALYSIS_RESULTS
 from repository_manager import clone_repository
 from commit_loader import load_commits
 from data_enricher import enrich_commits
-from data_saver import save_to_json, load_from_json
+from data_saver import save_to_json
 from analyzer import search_for_cc_indications
 from typing import Dict, Any
 import logging

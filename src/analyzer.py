@@ -1,13 +1,12 @@
 # Standard library imports
 import logging
 import os
-from pathlib import Path
-import json
-
-# Third-party library imports
-import requests
-from bs4 import BeautifulSoup
 import re
+import json
+import requests
+
+from pathlib import Path
+from bs4 import BeautifulSoup
 
 
 def check_homepage_for_cc(homepage_url):
@@ -63,7 +62,7 @@ def search_for_cc_indications(repo_instance, homepage):
 
     Args:
         :param repo_instance: Repository instance to analyze.
-        :param homepage:
+        :param homepage: URL of the repository's homepage.
 
     Returns:
         bool: True if CC is used, False otherwise.
@@ -258,17 +257,3 @@ def check_docu_wiki_for_cc(local_path):
         logging.debug("No wiki directory found. Skipping wiki check.")
 
     return False
-
-def aggregate_commit_types(summaries, string):
-    total_cc_type_distribution = Counter(
-        ctype
-        for summary in summaries
-        for ctype, count in summary.get(string, {}).items()
-        for _ in range(count)
-    )
-
-    print("Gesamte CC-Typ-Verteilung:")
-    for ctype, count in total_cc_type_distribution.items():
-        print(f"{ctype}: {count}")
-
-    plot_aggregate_commit_types(dict(total_cc_type_distribution), string)
