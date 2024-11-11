@@ -5,6 +5,8 @@ Specification (CCS)](www.conventionalcommits.org) across open-source software pr
 
 The code facilitates data collection, processing, and analysis – all as detailed in the bachelor thesis, "Commit Conventions: Conception and Impact of the Conventional Commit Specification in Open Source."
 
+Here's a link to the [Thesis](https://github.com/annafreidl/ConventionalCommitsStudy/blob/main/thesis.pdf)
+
 ## Overview
 This project investigates the adoption rates and consistency of CCS in open-source repositories and analyzes its effects on commit behaviors. Using data from GitHub, it evaluates how the introduction of CCS affects commit patterns, structure, and documentation quality, providing insights for software development practices and automation.
 
