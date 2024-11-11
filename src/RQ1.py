@@ -85,6 +85,9 @@ def calculate_ccp(repos):
     cc_commits_custom = 0
     len_cc_commits = 0
 
+    cc_in_non_cc_repos = 0
+    custom_in_non_cc_repos = 0
+
     for repo in repos:
 
         commits = repo.get('commits', [])
@@ -99,27 +102,33 @@ def calculate_ccp(repos):
             cc_commits_cc += len([commit for commit in cc_commits if commit.get('cc_type') is not None])
             cc_commits_custom += len([commit for commit in cc_commits if commit.get('custom_type') is not None])
             len_cc_commits += len(cc_commits)
+        else:
+            cc_in_non_cc_repos += len([commit for commit in commits if commit.get('cc_type') is not None])
+            custom_in_non_cc_repos += len([commit for commit in commits if commit.get('custom_type') is not None])
+
 
     total_cc_commits_rate = commits_cc / len_commits * 100
     total_custom_commits_rate = commits_custom / len_commits * 100
     cc_commits_rate = cc_commits_cc / len_cc_commits * 100
     custom_commits_rate = cc_commits_custom / len_cc_commits * 100
+    total_cc_in_non_cc_repos_rate = cc_in_non_cc_repos / len_commits * 100
+    total_custom_in_non_cc_repos_rate = custom_in_non_cc_repos / len_commits * 100
 
-    return total_cc_commits_rate, total_custom_commits_rate, cc_commits_rate, custom_commits_rate
+    return total_cc_commits_rate, total_custom_commits_rate, cc_commits_rate, custom_commits_rate, total_cc_in_non_cc_repos_rate, total_custom_in_non_cc_repos_rate
 
 
 def plot_ccp(repos, file):
-    total_cc_commits_rate, total_custom_commits_rate, cc_commits_rate, custom_commits_rate = calculate_ccp(repos)
+    total_cc_commits_rate, total_custom_commits_rate, cc_commits_rate, custom_commits_rate, total_cc_in_non_cc_repos_rate, total_custom_in_non_cc_repos_rate = calculate_ccp(repos)
 
     data = pd.DataFrame({
         'Category': ['CC-Type Commits \noverall', 'Custom-Type Commits \noverall', 'CC-Type Commits \nin CC-Repos',
-                     'Custom-Type Commits \nin CC-Repos'],
+                     'Custom-Type Commits \nin CC-Repos', 'CC-Type Commits \nin non-CC-Repos', 'Custom-Type Commits \nin non-CC-Repos'],
         'CCP': [round(total_cc_commits_rate, 2), round(total_custom_commits_rate, 2), round(cc_commits_rate, 2),
-                round(custom_commits_rate, 2)]
+                round(custom_commits_rate, 2), round(total_cc_in_non_cc_repos_rate, 2), round(total_custom_in_non_cc_repos_rate, 2)]
     })
 
     # Erstellen des Barplots
-    plt.figure(figsize=(6.202, 4.652))
+    plt.figure(figsize=(6.202, 3.000))
     ax = sns.barplot(x='Category', y='CCP', data=data, color=colors[6])
     ax.bar_label(ax.containers[0], fontsize=10)
 
@@ -128,6 +137,7 @@ def plot_ccp(repos, file):
     plt.ylim(0, 100)  # Annahme, dass der CCP zwischen 0 und 100 liegt
     # Anzeige des Plots
 
+    plt.xticks(fontsize=5)
     plt.tight_layout()
     plt.savefig(PLOTS / file)
     plt.close()

@@ -17,7 +17,7 @@ def main():
 
     # Load and process the dataset
     dataset = load_dataset()
-    # process_repositories(dataset)
+    process_repositories(dataset)
 
     # Load enriched data
     repos, summaries, commits = load_enriched_data()
