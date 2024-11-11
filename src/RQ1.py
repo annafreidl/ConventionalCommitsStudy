@@ -30,6 +30,9 @@ def analyze_rq1(repos, summaries, commits, dataset):
     """
     Performs analysis related to Research Question 1.
     """
+    # Plot CCP over all Repos and CC-Repos
+    plot_ccp(repos, 'cc_over_time.pdf')
+
     # Plot adoption rate by language
     plot_adoption_rate_by_language(summaries, 'adoption_rate_by_language.pdf')
 
@@ -62,6 +65,72 @@ def analyze_rq1(repos, summaries, commits, dataset):
 
     # Compile overall results
     compile_overall_results(repos, dataset, classification_matrix, correlations)
+
+
+def calculate_ccp(repos):
+    """
+    Loads all commits from JSON files and filters out repositories without a cc_adoption_date.
+
+    Parameters:
+        repos (list of dict): List of repository data.
+
+    Returns:
+        pd.DataFrame: DataFrame with commits from repositories with a valid cc_adoption_date.
+    """
+    commits_cc = 0
+    commits_custom = 0
+    len_commits = 0
+
+    cc_commits_cc = 0
+    cc_commits_custom = 0
+    len_cc_commits = 0
+
+    for repo in repos:
+
+        commits = repo.get('commits', [])
+        adoption_date = repo.get('analysis_summary').get('cc_adoption_date')
+
+        commits_cc += len([commit for commit in commits if commit.get('custom_type') is not None])
+        commits_custom += len([commit for commit in commits if commit.get('cc_type') is not None])
+        len_commits += len(commits)
+
+        if adoption_date:
+            cc_commits = [commit for commit in commits if adoption_date is not None]
+            cc_commits_cc += len([commit for commit in cc_commits if commit.get('cc_type') is not None])
+            cc_commits_custom += len([commit for commit in cc_commits if commit.get('custom_type') is not None])
+            len_cc_commits += len(cc_commits)
+
+    total_cc_commits_rate = commits_cc / len_commits * 100
+    total_custom_commits_rate = commits_custom / len_commits * 100
+    cc_commits_rate = cc_commits_cc / len_cc_commits * 100
+    custom_commits_rate = cc_commits_custom / len_cc_commits * 100
+
+    return total_cc_commits_rate, total_custom_commits_rate, cc_commits_rate, custom_commits_rate
+
+
+def plot_ccp(repos, file):
+    total_cc_commits_rate, total_custom_commits_rate, cc_commits_rate, custom_commits_rate = calculate_ccp(repos)
+
+    data = pd.DataFrame({
+        'Category': ['CC-Type Commits \noverall', 'Custom-Type Commits \noverall', 'CC-Type Commits \nin CC-Repos',
+                     'Custom-Type Commits \nin CC-Repos'],
+        'CCP': [round(total_cc_commits_rate, 2), round(total_custom_commits_rate, 2), round(cc_commits_rate, 2),
+                round(custom_commits_rate, 2)]
+    })
+
+    # Erstellen des Barplots
+    plt.figure(figsize=(6.202, 4.652))
+    ax = sns.barplot(x='Category', y='CCP', data=data, color=colors[6])
+    ax.bar_label(ax.containers[0], fontsize=10)
+
+    # Achsen und Titel
+    plt.ylabel('Average CCP (%)')
+    plt.ylim(0, 100)  # Annahme, dass der CCP zwischen 0 und 100 liegt
+    # Anzeige des Plots
+
+    plt.tight_layout()
+    plt.savefig(PLOTS / file)
+    plt.close()
 
 
 def escape_latex(text):
